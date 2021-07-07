@@ -421,7 +421,7 @@ function initialize_multint_language_strings() {
 	arr["FRENCH","multint_text_2"]="Sélectionnez une interface pour Deauth (Monitor Mode) :"
 	arr["CATALAN","multint_text_2"]="Seleccioneu una interfície per a Deauth (Monitor Mode:"
 	arr["PORTUGUESE","multint_text_2"]="Selecione uma interface para Deauth (Monitor Mode):"
-	arr["RUSSIAN","multint_text_2"]="Выберите интерфейс для and Deauth (Monitor Mode):
+	arr["RUSSIAN","multint_text_2"]="Выберите интерфейс для and Deauth (Monitor Mode):"
 	arr["GREEK","multint_text_2"]="Επιλέξτε μια διεπαφή για Deauth (Monitor Mode):"
 	arr["ITALIAN","multint_text_2"]="Seleziona un'interfaccia per Deauth (Monitor Mode):"
 	arr["POLISH","multint_text_2"]="Wybierz interfejs dla Deauth (Monitor Mode):"
