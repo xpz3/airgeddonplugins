@@ -8,4 +8,5 @@
 </ul>
 
 <strong>Usage</strong>
+<br>
 Just download and copy the plugin file to the plugins folder inside airgeddon directory. Please do not rename any plugin file. After copying the file, just run airgeddon as you normally would and the plugin will do its job.
