@@ -225,7 +225,7 @@ function multint_override_restore_et_interface() {
 	fi
 }
 
-function select_secondary_et_interface() {
+function multint_override_select_secondary_et_interface() {
 
 	debug_print
 
