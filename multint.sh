@@ -399,6 +399,21 @@ function multint_override_select_secondary_et_interface() {
 	fi
 }
 
+function multint_override_check_vif_support() {
+
+	debug_print
+	if [ "${current_menu}" = "evil_twin_attacks_menu" ]; then
+		return 0
+	else
+		if iw "${phy_interface}" info | grep "Supported interface modes" -A 8 | grep "AP/VLAN" > /dev/null 2>&1; then
+			return 0
+		else
+			return 1
+		fi
+	fi
+}
+
+
 function initialize_multint_language_strings() {
 
 	debug_print
