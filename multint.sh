@@ -413,7 +413,6 @@ function multint_override_check_vif_support() {
 	fi
 }
 
-
 function initialize_multint_language_strings() {
 
 	debug_print
