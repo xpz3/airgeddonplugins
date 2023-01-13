@@ -938,7 +938,7 @@ function initialize_nogui_language_strings() {
 	debug_print
 
 	arr["ENGLISH","nogui_text_1"]="The attack is going to start. Press Ctrl+C to stop the attack and return to menu. Press Enter to continue..."
-	arr["SPANISH","nogui_text_1"]="The attack is going to start. Press Ctrl+C to stop the attack and return to menu. Press Enter to continue..."
+	arr["SPANISH","nogui_text_1"]="El ataque va a comenzar. Pulsa Ctrl+C para parar el ataque y volver al menú. Pulsa Enter para continuar..."
 	arr["FRENCH","nogui_text_1"]="The attack is going to start. Press Ctrl+C to stop the attack and return to menu. Press Enter to continue..."
 	arr["CATALAN","nogui_text_1"]="The attack is going to start. Press Ctrl+C to stop the attack and return to menu. Press Enter to continue..."
 	arr["PORTUGUESE","nogui_text_1"]="The attack is going to start. Press Ctrl+C to stop the attack and return to menu. Press Enter to continue..."
@@ -951,7 +951,7 @@ function initialize_nogui_language_strings() {
 	arr["ARABIC","nogui_text_1"]="The attack is going to start. Press Ctrl+C to stop the attack and return to menu. Press Enter to continue..."
 	
 	arr["ENGLISH","nogui_text_2"]="Press Ctrl+C to return to the menu..."
-	arr["SPANISH","nogui_text_2"]="Press Ctrl+C to return to the menu..."
+	arr["SPANISH","nogui_text_2"]="Pulsa Ctrl+C para volver al menú..."
 	arr["FRENCH","nogui_text_2"]="Press Ctrl+C to return to the menu..."
 	arr["CATALAN","nogui_text_2"]="Press Ctrl+C to return to the menu..."
 	arr["PORTUGUESE","nogui_text_2"]="Press Ctrl+C to return to the menu..."
