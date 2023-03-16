@@ -15,7 +15,7 @@ plugin_enabled=1
 ###### PLUGIN REQUIREMENTS ######
 
 #Set airgeddon versions to apply this plugin (leave blank to set no limits, minimum version recommended is 10.0 on which plugins feature was added)
-plugin_minimum_ag_affected_version="10.0"
+plugin_minimum_ag_affected_version="11.20"
 plugin_maximum_ag_affected_version=""
 
 #Set only one element in the array "*" to affect all distros, otherwise add them one by one with the name which airgeddon uses for that distro (examples "BlackArch", "Parrot", "Kali")
@@ -225,7 +225,7 @@ function multint_override_restore_et_interface() {
 	fi
 }
 
-function multint_override_select_secondary_et_interface() {
+function multint_override_select_secondary_interface() {
 
 	debug_print
 
@@ -248,7 +248,9 @@ function multint_override_select_secondary_et_interface() {
 				language_strings "${language}" 523 "title"
 			;;
 		esac
-	else
+	elif [[ -z "${enterprise_mode}" ]] && [[ -z "${et_mode}" ]]; then
+		current_menu="dos_attacks_menu"
+	elif [[ -z "${enterprise_mode}" ]] && [[ -n "${et_mode}" ]]; then
 		current_menu="evil_twin_attacks_menu"
 		case ${et_mode} in
 			"et_onlyap")
@@ -345,7 +347,7 @@ function multint_override_select_secondary_et_interface() {
 	if [ ${option_counter} -eq 0 ]; then
 		if [ -n "${enterprise_mode}" ]; then
 			return_to_enterprise_main_menu=1
-		else
+		elif [[ -z "${enterprise_mode}" ]] && [[ -n "${et_mode}" ]]; then
 			return_to_et_main_menu=1
 			return_to_et_main_menu_from_beef=1
 		fi
@@ -369,7 +371,7 @@ function multint_override_select_secondary_et_interface() {
 	if [ "${secondary_iface}" -eq 0 ] 2> /dev/null; then
 		if [ -n "${enterprise_mode}" ]; then
 			return_to_enterprise_main_menu=1
-		else
+		elif [[ -z "${enterprise_mode}" ]] && [[ -n "${et_mode}" ]]; then
 			return_to_et_main_menu=1
 			return_to_et_main_menu_from_beef=1
 		fi
