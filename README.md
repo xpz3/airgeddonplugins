@@ -7,6 +7,7 @@
     <li><strong>multint.sh:</strong> This plugin enables Airgeddon to use more than one interface to be used with Captive Portal attack. By default, Airgeddon uses <code>Virtual Interface</code> method on supported chipsets to create  monitor mode and master mode required to run captive portal attack. For users who do not have a fully compatible chipset, they can use this plugin to use multiple cards that support monitor and master mode one per card to run captive portal attack.</li>
     <li><strong>nogui.sh:</strong> This plugin voids the requirement of xterm or tmux for evil twin attack. This plugin only works with Evil Twin attack with Captive Portal method (Option 9 in Evil Twin attacks menu)</li>
     <li><strong>custom_essid.sh:</strong> This plugin allows you to specify custom name for a target AP with hidden SSID, after discovering it with deauth attack.</li>
+    <li><strong>mass_handshake_capture.sh:</strong> This plugin allows you to mass capture Handshake/PMKID from nearby WPA networks. After downloading the plugin to the airgeddon/plugins directory, run airgeddon, select interface and put the card into monitor mode and then goto Handshake/PMKID Tools menu and choose Option 8. Mass Handshake/PMKID Capture and then follow the instructions. There are some variables that can be set according to the needs. Open the plugin file and see the top section.</li>
 </ul>
 
 <strong>Usage</strong>
