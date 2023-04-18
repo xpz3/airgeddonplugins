@@ -952,16 +952,16 @@ function initialize_nogui_language_strings() {
 	
 	arr["ENGLISH",nogui_text_2]="Press Ctrl+C to return to the menu..."
 	arr["SPANISH",nogui_text_2]="Pulsa Ctrl+C para volver al menú..."
-	arr["FRENCH",nogui_text_2]="${pending_of_translation} Appuyez sur Ctrl+C pour revenir au menu..."
-	arr["CATALAN",nogui_text_2]="${pending_of_translation} Premeu Ctrl+C per tornar al menú..."
-	arr["PORTUGUESE",nogui_text_2]="${pending_of_translation} Pressione Ctrl+C para retornar ao menu..."
-	arr["RUSSIAN",nogui_text_2]="${pending_of_translation} Нажмите Ctrl+C, чтобы вернуться в меню..."
-	arr["GREEK",nogui_text_2]="${pending_of_translation} Πατήστε Ctrl+C για να επιστρέψετε στο μενού..."
-	arr["ITALIAN",nogui_text_2]="${pending_of_translation} Premi Ctrl+C per tornare al menu..."
-	arr["POLISH",nogui_text_2]="${pending_of_translation} Naciśnij Ctrl+C, aby wrócić do menu..."
-	arr["GERMAN",nogui_text_2]="${pending_of_translation} Drücken Sie Strg+C, um zum Menü zurückzukehren ..."
-	arr["TURKISH",nogui_text_2]="${pending_of_translation} Menüye dönmek için Ctrl+C tuşlarına basın..."
-	arr["ARABIC",nogui_text_2]="${pending_of_translation} ...اضغط على Ctrl+C للعودة إلى القائمة"
+	arr["FRENCH",nogui_text_2]="\${pending_of_translation} Appuyez sur Ctrl+C pour revenir au menu..."
+	arr["CATALAN",nogui_text_2]="\${pending_of_translation} Premeu Ctrl+C per tornar al menú..."
+	arr["PORTUGUESE",nogui_text_2]="\${pending_of_translation} Pressione Ctrl+C para retornar ao menu..."
+	arr["RUSSIAN",nogui_text_2]="\${pending_of_translation} Нажмите Ctrl+C, чтобы вернуться в меню..."
+	arr["GREEK",nogui_text_2]="\${pending_of_translation} Πατήστε Ctrl+C για να επιστρέψετε στο μενού..."
+	arr["ITALIAN",nogui_text_2]="\${pending_of_translation} Premi Ctrl+C per tornare al menu..."
+	arr["POLISH",nogui_text_2]="\${pending_of_translation} Naciśnij Ctrl+C, aby wrócić do menu..."
+	arr["GERMAN",nogui_text_2]="\${pending_of_translation} Drücken Sie Strg+C, um zum Menü zurückzukehren ..."
+	arr["TURKISH",nogui_text_2]="\${pending_of_translation} Menüye dönmek için Ctrl+C tuşlarına basın..."
+	arr["ARABIC",nogui_text_2]="\${pending_of_translation} ...اضغط على Ctrl+C للعودة إلى القائمة"
 }
 
 initialize_nogui_language_strings
