@@ -4,9 +4,10 @@
 #shellcheck disable=SC2034,SC2154
 
 plugin_name="Mass Handshake Capture"
-plugin_description="Automated mass Handshake/PMKID capture from nearby networks"
+plugin_description="Automated mass Handshake/PMKID capture for nearby networks"
 plugin_author="xpz3"
 
+#Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
 plugin_minimum_ag_affected_version="11.11"
@@ -27,6 +28,15 @@ timeout="${timeout_capture_handshake}"
 
 #Default path to save captured targets will be set as <current_path_to_airgeddon/plugins/captured_handshakes/ if the path below is not set
 mass_handshake_capture_default_save_path=""
+
+#AP blacklist file name
+mass_handshake_capture_ap_blacklist_name="ap_blacklist.txt"
+
+#Default path to AP blacklist to avoid capturing handshake/PMKID for already captured ones
+mass_handshake_capture_default_blacklist_path=""
+
+#Enable/Disable AP blacklist
+mass_capture_handshake_enable_blacklist=1
 
 # End of user defined values
 
@@ -267,6 +277,9 @@ function mass_handshake_capture_launch_handshake_capture() {
 			handshakefilename="handshake-${bssid}.cap"
 			handshakepath="${handshakepath}${handshakefilename}"
 			enteredpath="${handshakepath}"
+			if [ "${mass_capture_handshake_enable_blacklist}" -eq 1 ];then
+					echo "${essid}" >>"${mass_handshake_capture_default_blacklist_path}${mass_handshake_capture_ap_blacklist_name}"
+			fi
 
 			cp "${tmpdir}${standardhandshake_filename}" "${enteredpath}"
 		;;
@@ -418,6 +431,10 @@ function mass_handshake_capture() {
 	fi
 	if [ -z "${mass_handshake_capture_default_save_path}" ];then
 		mass_handshake_capture_default_save_path="${mass_handshake_capture_absolute_script_path}"plugins/captured_handshakes/
+		mass_handshake_capture_default_blacklist_path="${mass_handshake_capture_default_save_path}"
+	fi
+	if [ -z "${mass_handshake_capture_default_blacklist_path}" ];then
+		mass_handshake_capture_default_blacklist_path="${mass_handshake_capture_default_save_path}"
 	fi
 
 	if [ ! -d "${mass_handshake_capture_default_save_path}" ]; then
@@ -578,7 +595,10 @@ function mass_handshake_capture_grab_wpa_targets() {
 	fi
 
 	sort -t "," -d -k 4 "${tmpdir}nws.txt" > "${tmpdir}wnws.txt"
-	grep -v "Hidden" "${tmpdir}wnws.txt" > "${tmpdir}wnws1.txt"; mv "${tmpdir}wnws1.txt" "${tmpdir}wnws.txt"
+	grep -v "Hidden" "${tmpdir}wnws.txt" > "${tmpdir}wnws1.txt" && mv "${tmpdir}wnws1.txt" "${tmpdir}wnws.txt"
+	if [ "${mass_capture_handshake_enable_blacklist}" -eq 1 ];then
+		grep -vFf "${mass_handshake_capture_default_blacklist_path}${mass_handshake_capture_ap_blacklist_name}" "${tmpdir}wnws.txt" >"${tmpdir}wnws2.txt" && mv "${tmpdir}wnws2.txt" "${tmpdir}wnws.txt"
+	fi
 	mass_handshake_capture_get_targets_count
 	mass_handshake_capture_automate
 }
