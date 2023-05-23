@@ -34,7 +34,7 @@ function airgeddon_cli_print_usage() {
 	debug_print
 
 	echo
-	echo $'bash' "${scriptname}"$' [-a|-advportal|--advportal] [-b|-bssid|--bssid <bssid>] [-c|-channnel|--channel <channel>]\n\t[-cl|--cl <captive portal password log path>] [-d|-debug|--debug] [-dos|--dos <DoS mode>]\n\t[-e|-essid|--essid <essid>] [-enc|--enc <encryption type>] [-f|-file|--file <filename>]\n\t[-h|-hsfile|--hsfile <handshakefilepath>] [-i|-interface|--interface <interface>]\n\t[-l|-cplang|--cplang <captive portal language>] [-m|-ms|--ms] [-nk|--nk]\n\t[-p|-dp|--dp <DoS pursuit interface>] [-t|-tmux|--tmux] [-v|-version|--version]'
+	echo $'bash' "${scriptname}"$' [-a|-advportal|--advportal] [-b|-bssid|--bssid <bssid>] [-c|-channnel|--channel <channel>]\n\t[-cl|--cl <captive portal password log path>] [-d|-debug|--debug] [-dos|--dos <DoS mode>]\n\t[-e|-essid|--essid <essid>] [-enc|--enc <encryption type>] [-f|-file|--file <filename>]\n\t[-h|-hsfile|--hsfile <handshakefilepath>] [-i|-interface|--interface <interface>]\n\t[-l|-cplang|--cplang <captive portal language>] [-m|-ms|--ms] [-nk|--nk]\n\t[-p|-dp|--dp <DoS pursuit interface>] [-t|-tmux|--tmux] [-u|-usage|--usage] [-v|-version|--version]'
 	echo
 	echo $'\t[-a|-advportal|--advportal]\n\t\tEnable advanced captive portal'
 	echo $'\t[-b|-bssid|--bssid <bssid>]\n\t\tSpecify target bssid'
