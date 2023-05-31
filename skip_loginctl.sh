@@ -18,5 +18,5 @@ function skip_loginctl_posthook_graphics_prerequisites() {
 
 	debug_print
 
-	graphics_system="${XDG_SESSION_TYPE}"
+	graphics_system="x11"
 }
