@@ -41,6 +41,7 @@ function initialize_custom_essid_language_strings() {
 	arr["GERMAN","custom_essid_text_1"]="A hidden network has been chosen for Evil Twin attack. Please specify the SSID of the target AP to continue"
 	arr["TURKISH","custom_essid_text_1"]="A hidden network has been chosen for Evil Twin attack. Please specify the SSID of the target AP to continue"
 	arr["ARABIC","custom_essid_text_1"]="A hidden network has been chosen for Evil Twin attack. Please specify the SSID of the target AP to continue"
+	arr["CHINESE","custom_essid_text_1"]="您选择了一个隐藏的网络发起邪恶双胞胎攻击，请手动指定目标隐藏AP的SSID以继续"
 }
 
 initialize_custom_essid_language_strings

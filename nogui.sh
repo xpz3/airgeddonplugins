@@ -949,6 +949,7 @@ function initialize_nogui_language_strings() {
 	arr["GERMAN",nogui_text_1]="\${pending_of_translation} Der Angriff wird beginnen. Drücken Sie Ctrl+C, um den Angriff zu stoppen und zum Menü zurückzukehren. Drücken Sie die Eingabetaste, um fortzufahren ..."
 	arr["TURKISH",nogui_text_1]="\${pending_of_translation} Saldırı başlayacak. Saldırıyı durdurmak ve menüye dönmek için Ctrl+C tuşlarına basın. Devam etmek için Enter'a basın..."
 	arr["ARABIC",nogui_text_1]="\${pending_of_translation} ...الهجوم سيبدأ. اضغط على Ctrl+C لإيقاف الهجوم والعودة إلى القائمة. إضغط مفتاح الدخول للاستمرار"
+	arr["CHINESE",nogui_text_1]="攻击就要开始了，按 Ctrl+C 停止攻击并返回菜单，按 Enter 继续..."
 	
 	arr["ENGLISH",nogui_text_2]="Press Ctrl+C to return to the menu..."
 	arr["SPANISH",nogui_text_2]="Pulsa Ctrl+C para volver al menú..."
@@ -962,6 +963,7 @@ function initialize_nogui_language_strings() {
 	arr["GERMAN",nogui_text_2]="\${pending_of_translation} Drücken Sie Strg+C, um zum Menü zurückzukehren ..."
 	arr["TURKISH",nogui_text_2]="\${pending_of_translation} Menüye dönmek için Ctrl+C tuşlarına basın..."
 	arr["ARABIC",nogui_text_2]="\${pending_of_translation} ...اضغط على Ctrl+C للعودة إلى القائمة"
+	arr["CHINESE",nogui_text_2]="按 Ctrl+C 返回菜单..."
 }
 
 initialize_nogui_language_strings

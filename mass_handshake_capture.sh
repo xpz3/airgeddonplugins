@@ -736,6 +736,7 @@ function initialize_mass_handshake_capture_language_strings() {
 	arr["GERMAN","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
 	arr["TURKISH","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
 	arr["ARABIC","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
+	arr["CHINESE","mass_handshake_capture_text_1"]="8.  大规模 Handshake/PMKID 捕获"
 	
 	arr["ENGLISH","mass_handshake_capture_text_2"]="Mass Handshake/PMKID Capture"
 	arr["SPANISH","mass_handshake_capture_text_2"]="Mass Handshake/PMKID Capture"
@@ -749,6 +750,7 @@ function initialize_mass_handshake_capture_language_strings() {
 	arr["GERMAN","mass_handshake_capture_text_2"]="Mass Handshake/PMKID Capture"
 	arr["TURKISH","mass_handshake_capture_text_2"]="Mass Handshake/PMKID Capture"
 	arr["ARABIC","mass_handshake_capture_text_2"]="Mass Handshake/PMKID Capture"
+	arr["CHINESE","mass_handshake_capture_text_2"]="大规模 Handshake/PMKID 捕获"
 	
 	arr["ENGLISH","mass_handshake_capture_text_3"]="Trying AP \${mass_handshake_capture_target_counter}/\${mass_handshake_capture_targets_count}"
 	arr["SPANISH","mass_handshake_capture_text_3"]="Trying AP \${mass_handshake_capture_target_counter}/\${mass_handshake_capture_targets_count}"
@@ -762,6 +764,7 @@ function initialize_mass_handshake_capture_language_strings() {
 	arr["GERMAN","mass_handshake_capture_text_3"]="Trying AP \${mass_handshake_capture_target_counter}/\${mass_handshake_capture_targets_count}"
 	arr["TURKISH","mass_handshake_capture_text_3"]="Trying AP \${mass_handshake_capture_target_counter}/\${mass_handshake_capture_targets_count}"
 	arr["ARABIC","mass_handshake_capture_text_3"]="Trying AP \${mass_handshake_capture_target_counter}/\${mass_handshake_capture_targets_count}"
+	arr["CHINESE","mass_handshake_capture_text_3"]="尝试 AP \${mass_handshake_capture_target_counter}/\${mass_handshake_capture_targets_count}"
 	
 	arr["ENGLISH","mass_handshake_capture_text_4"]="Captured \${mass_handshake_capture_captured_handshakes_counter} handshakes/PMKID from \${mass_handshake_capture_targets_count} APs"
 	arr["SPANISH","mass_handshake_capture_text_4"]="Captured \${mass_handshake_capture_captured_handshakes_counter} handshakes/PMKID from \${mass_handshake_capture_targets_count} APs"
@@ -775,6 +778,7 @@ function initialize_mass_handshake_capture_language_strings() {
 	arr["GERMAN","mass_handshake_capture_text_4"]="Captured \${mass_handshake_capture_captured_handshakes_counter} handshakes/PMKID from \${mass_handshake_capture_targets_count} APs"
 	arr["TURKISH","mass_handshake_capture_text_4"]="Captured \${mass_handshake_capture_captured_handshakes_counter} handshakes/PMKID from \${mass_handshake_capture_targets_count} APs"
 	arr["ARABIC","mass_handshake_capture_text_4"]="Captured \${mass_handshake_capture_captured_handshakes_counter} handshakes/PMKID from \${mass_handshake_capture_targets_count} APs"
+	arr["CHINESE","mass_handshake_capture_text_4"]="捕获完成 \${mass_handshake_capture_captured_handshakes_counter} handshakes/PMKID from \${mass_handshake_capture_targets_count} APs"
 }
 
 initialize_mass_handshake_capture_language_strings
