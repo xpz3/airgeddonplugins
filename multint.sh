@@ -420,7 +420,7 @@ function initialize_multint_language_strings() {
 	debug_print
 
 	arr["ENGLISH","multint_text_1"]="Select an interface for AP (Master Mode):"
-	arr["SPANISH","multint_text_1"]="Seleccione una interfaz para AP (Master Mode):"
+	arr["SPANISH","multint_text_1"]="Selecciona una interfaz para AP (Master Mode):"
 	arr["FRENCH","multint_text_1"]="Sélectionnez une interface pour AP (Master Mode) :"
 	arr["CATALAN","multint_text_1"]="Seleccioneu una interfície per a AP (Master Mode):"
 	arr["PORTUGUESE","multint_text_1"]="Selecione uma interface para AP (Master Mode):"
@@ -434,7 +434,7 @@ function initialize_multint_language_strings() {
 	arr["CHINESE","multint_text_1"]="请选择一个接口用于 AP (Master Mode):"
 
 	arr["ENGLISH","multint_text_2"]="Select an interface for Deauth (Monitor Mode):"
-	arr["SPANISH","multint_text_2"]="Seleccione una interfaz para Deauth (Monitor Mode):"
+	arr["SPANISH","multint_text_2"]="Selecciona una interfaz para Deauth (Monitor Mode):"
 	arr["FRENCH","multint_text_2"]="Sélectionnez une interface pour Deauth (Monitor Mode) :"
 	arr["CATALAN","multint_text_2"]="Seleccioneu una interfície per a Deauth (Monitor Mode:"
 	arr["PORTUGUESE","multint_text_2"]="Selecione uma interface para Deauth (Monitor Mode):"
