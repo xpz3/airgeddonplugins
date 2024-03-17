@@ -223,6 +223,8 @@ function multint_override_restore_et_interface() {
 			fi
 		fi
 	fi
+
+	control_routing_status "end"
 }
 
 function multint_override_select_secondary_interface() {
@@ -259,10 +261,10 @@ function multint_override_select_secondary_interface() {
 			"et_sniffing")
 				language_strings "${language}" 291 "title"
 			;;
-			"et_sniffing_sslstrip")
+			"et_sniffing_sslstrip2")
 				language_strings "${language}" 292 "title"
 			;;
-			"et_sniffing_sslstrip2")
+			"et_sniffing_sslstrip2_beef")
 				language_strings "${language}" 397 "title"
 			;;
 			"et_captive_portal")
@@ -310,10 +312,12 @@ function multint_override_select_secondary_interface() {
 
 	option_counter=0
 	for item in "${secondary_ifaces[@]}"; do
-		if [ ${option_counter} -eq 0 ]; then
+		if [ "${option_counter}" -eq 0 ]; then
 			if [ "${1}" = "dos_pursuit_mode" ]; then
+				echo
 				language_strings "${language}" 511 "green"
 			elif [ "${1}" = "internet" ]; then
+				echo
 				language_strings "${language}" 279 "green"
 			fi
 			print_simple_separator
@@ -344,7 +348,7 @@ function multint_override_select_secondary_interface() {
 		fi
 	done
 
-	if [ ${option_counter} -eq 0 ]; then
+	if [ "${option_counter}" -eq 0 ]; then
 		if [ -n "${enterprise_mode}" ]; then
 			return_to_enterprise_main_menu=1
 		elif [[ -z "${enterprise_mode}" ]] && [[ -n "${et_mode}" ]]; then
@@ -376,7 +380,7 @@ function multint_override_select_secondary_interface() {
 			return_to_et_main_menu_from_beef=1
 		fi
 		return 1
-	elif [[ ! ${secondary_iface} =~ ^[[:digit:]]+$ ]] || (( secondary_iface < 1 || secondary_iface > option_counter )); then
+	elif [[ ! ${secondary_iface} =~ ^[[:digit:]]+$ ]] || ((secondary_iface < 1 || secondary_iface > option_counter)); then
 		if [ "${1}" = "dos_pursuit_mode" ]; then
 			invalid_secondary_iface_selected "dos_pursuit_mode"
 		else
@@ -386,7 +390,7 @@ function multint_override_select_secondary_interface() {
 		option_counter2=0
 		for item2 in "${secondary_ifaces[@]}"; do
 			option_counter2=$((option_counter2 + 1))
-			if [[ "${secondary_iface}" = "${option_counter2}" ]]; then
+			if [ "${secondary_iface}" = "${option_counter2}" ]; then
 				if [ "${1}" = "dos_pursuit_mode" ]; then
 					secondary_wifi_interface=${item2}
 					secondary_phy_interface=$(physical_interface_finder "${secondary_wifi_interface}")
