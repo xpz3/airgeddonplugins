@@ -223,8 +223,6 @@ function multint_override_restore_et_interface() {
 			fi
 		fi
 	fi
-
-	control_routing_status "end"
 }
 
 function multint_override_select_secondary_interface() {
