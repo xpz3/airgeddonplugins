@@ -88,6 +88,7 @@ function airgeddon_cli_override_exec_et_captive_portal_attack() {
 
 	set_hostapd_config
 	launch_fake_ap
+ 	set_network_interface_data
 	set_dhcp_config
 	set_std_internet_routing_rules
 	launch_dhcp_server
