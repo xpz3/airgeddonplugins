@@ -15,7 +15,7 @@ plugin_enabled=1
 ###### PLUGIN REQUIREMENTS ######
 
 #Set airgeddon versions to apply this plugin (leave blank to set no limits, minimum version recommended is 10.0 on which plugins feature was added)
-plugin_minimum_ag_affected_version="11.20"
+plugin_minimum_ag_affected_version="11.31"
 plugin_maximum_ag_affected_version=""
 
 #Set only one element in the array "*" to affect all distros, otherwise add them one by one with the name which airgeddon uses for that distro (examples "BlackArch", "Parrot", "Kali")
@@ -103,6 +103,8 @@ function multint_override_select_interface() {
 						phy_interface=$(physical_interface_finder "${interface}")
 						check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
 						interface_mac=$(ip link show "${interface}" | awk '/ether/ {print $2}')
+						card_vif_support=1 #Suppress VIF not supported message as we are using two separate cards
+						check_interface_wifi_longname "${interface}"
 						break
 					fi
 				fi
@@ -185,44 +187,51 @@ function multint_override_restore_et_interface() {
 	
 		interface="${multint_deauth_interface}"
 		set_mode_without_airmon "${multint_ap_interface}" "managed"
+		ifacemode="Monitor"
 	fi
 	echo
 	language_strings "${language}" 299 "blue"
 
 	disable_rfkill
 
-	mac_spoofing_desired=0	
+	mac_spoofing_desired=0
+	
+	ip addr del "${et_ip_router}/${std_c_mask}" dev "${interface}" > /dev/null 2>&1
+	ip route del "${et_ip_range}/${std_c_mask_cidr}" dev "${interface}" table local proto static scope link > /dev/null 2>&1
 
-	if [ "${et_initial_state}" = "Managed" ]; then
-		set_mode_without_airmon "${interface}" "managed"
-		ifacemode="Managed"
-	else
-		if [ "${interface_airmon_compatible}" -eq 1 ]; then
-			new_interface=$(${airmon} start "${interface}" 2> /dev/null | grep monitor)
-			desired_interface_name=""
-			[[ ${new_interface} =~ ^You[[:space:]]already[[:space:]]have[[:space:]]a[[:space:]]([A-Za-z0-9]+)[[:space:]]device ]] && desired_interface_name="${BASH_REMATCH[1]}"
-			if [ -n "${desired_interface_name}" ]; then
-				echo
-				language_strings "${language}" 435 "red"
-				language_strings "${language}" 115 "read"
-				return
-			fi
-
-			ifacemode="Monitor"
-
-			[[ ${new_interface} =~ \]?([A-Za-z0-9]+)\)?$ ]] && new_interface="${BASH_REMATCH[1]}"
-			if [ "${interface}" != "${new_interface}" ]; then
-				interface=${new_interface}
-				phy_interface=$(physical_interface_finder "${interface}")
-				check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
-				current_iface_on_messages="${interface}"
-			fi
+	if [ "${multint_enabled}" -eq 0 ]; then
+		if [ "${et_initial_state}" = "Managed" ]; then
+			set_mode_without_airmon "${interface}" "managed"
+			ifacemode="Managed"
 		else
-			if set_mode_without_airmon "${interface}" "monitor"; then
+			if [ "${interface_airmon_compatible}" -eq 1 ]; then
+				new_interface=$(${airmon} start "${interface}" 2> /dev/null | grep monitor)
+				desired_interface_name=""
+				[[ ${new_interface} =~ ^You[[:space:]]already[[:space:]]have[[:space:]]a[[:space:]]([A-Za-z0-9]+)[[:space:]]device ]] && desired_interface_name="${BASH_REMATCH[1]}"
+				if [ -n "${desired_interface_name}" ]; then
+					echo
+					language_strings "${language}" 435 "red"
+					language_strings "${language}" 115 "read"
+					return
+				fi
+
 				ifacemode="Monitor"
+
+				[[ ${new_interface} =~ \]?([A-Za-z0-9]+)\)?$ ]] && new_interface="${BASH_REMATCH[1]}"
+				if [ "${interface}" != "${new_interface}" ]; then
+					interface=${new_interface}
+					phy_interface=$(physical_interface_finder "${interface}")
+					check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
+					current_iface_on_messages="${interface}"
+				fi
+			else
+				if set_mode_without_airmon "${interface}" "monitor"; then
+					ifacemode="Monitor"
+				fi
 			fi
 		fi
 	fi
+	control_routing_status "end"
 }
 
 function multint_override_select_secondary_interface() {
@@ -400,20 +409,6 @@ function multint_override_select_secondary_interface() {
 			fi
 		done
 		return 0
-	fi
-}
-
-function multint_override_check_vif_support() {
-
-	debug_print
-	if [ "${current_menu}" = "evil_twin_attacks_menu" ]; then
-		return 0
-	else
-		if iw "${phy_interface}" info | grep "Supported interface modes" -A 8 | grep "AP/VLAN" > /dev/null 2>&1; then
-			return 0
-		else
-			return 1
-		fi
 	fi
 }
 
