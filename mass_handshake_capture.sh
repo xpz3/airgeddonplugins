@@ -10,7 +10,7 @@ plugin_author="xpz3"
 #Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="11.11"
+plugin_minimum_ag_affected_version="11.40"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -46,13 +46,13 @@ mass_handshake_capture_ap_details_path=""
 
 # End of user defined values
 
-function mass_handshake_capture_override_handshake_pmkid_tools_menu() {
+function mass_handshake_capture_override_handshake_pmkid_decloaking_tools_menu() {
 
 	debug_print
 
 	clear
 	language_strings "${language}" 120 "title"
-	current_menu="handshake_pmkid_tools_menu"
+	current_menu="handshake_pmkid_decloaking_tools_menu"
 	initialize_menu_and_print_selections
 	echo
 	language_strings "${language}" 47 "green"
@@ -65,8 +65,10 @@ function mass_handshake_capture_override_handshake_pmkid_tools_menu() {
 	language_strings "${language}" 124 "separator"
 	language_strings "${language}" 663 pmkid_dependencies[@]
 	language_strings "${language}" 121
-	print_simple_separator
 	language_strings "${language}" 122 clean_handshake_dependencies[@]
+	language_strings "${language}" 727 "separator"
+	language_strings "${language}" 725
+	language_strings "${language}" 726 "under_construction" #mdk_attack_dependencies[@]
 	language_strings "${language}" "mass_handshake_capture_text_1"
 	print_hint ${current_menu}
 
@@ -85,13 +87,26 @@ function mass_handshake_capture_override_handshake_pmkid_tools_menu() {
 			managed_option "${interface}"
 		;;
 		4)
-			explore_for_targets_option "WPA"
+			explore_for_targets_option
 		;;
 		5)
 			if contains_element "${handshake_option}" "${forbidden_options[@]}"; then
 				forbidden_menu_option
 			else
-				capture_pmkid_handshake "pmkid"
+				get_hcxdumptool_version
+				if compare_floats_greater_or_equal "${hcxdumptool_version}" "${minimum_hcxdumptool_bpf_version}"; then
+					if hash tcpdump 2> /dev/null; then
+						echo
+						language_strings "${language}" 716 "yellow"
+						capture_pmkid_handshake "pmkid"
+					else
+						echo
+						language_strings "${language}" 715 "red"
+						language_strings "${language}" 115 "read"
+					fi
+				else
+					capture_pmkid_handshake "pmkid"
+				fi
 			fi
 		;;
 		6)
@@ -105,6 +120,18 @@ function mass_handshake_capture_override_handshake_pmkid_tools_menu() {
 			fi
 		;;
 		8)
+			decloak_by_deauth
+		;;
+		9)
+			under_construction_message
+			#if contains_element "${handshake_option}" "${forbidden_options[@]}"; then
+			#	forbidden_menu_option
+			#else
+				#TODO decloaking using mdk3/4 by dictionary
+			#	mdk_dictionary_option
+			#fi
+		;;
+		10)
 			mass_handshake_capture "handshake"
 		;;
 		*)
@@ -112,7 +139,7 @@ function mass_handshake_capture_override_handshake_pmkid_tools_menu() {
 		;;
 	esac
 
-	handshake_pmkid_tools_menu
+	handshake_pmkid_decloaking_tools_menu
 }
 
 function mass_handshake_capture_capture_pmkid_handshake() {
@@ -724,19 +751,19 @@ function initialize_mass_handshake_capture_language_strings() {
 
 	debug_print
 	
-	arr["ENGLISH","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
-	arr["SPANISH","mass_handshake_capture_text_1"]="8.  Captura masiva de Handshake/PMKID"
-	arr["FRENCH","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
-	arr["CATALAN","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
-	arr["PORTUGUESE","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
-	arr["RUSSIAN","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
-	arr["GREEK","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
-	arr["ITALIAN","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
-	arr["POLISH","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
-	arr["GERMAN","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
-	arr["TURKISH","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
-	arr["ARABIC","mass_handshake_capture_text_1"]="8.  Mass Handshake/PMKID Capture"
-	arr["CHINESE","mass_handshake_capture_text_1"]="8.  大规模 Handshake/PMKID 捕获"
+	arr["ENGLISH","mass_handshake_capture_text_1"]="10.  Mass Handshake/PMKID Capture"
+	arr["SPANISH","mass_handshake_capture_text_1"]="10.  Captura masiva de Handshake/PMKID"
+	arr["FRENCH","mass_handshake_capture_text_1"]="10.  Mass Handshake/PMKID Capture"
+	arr["CATALAN","mass_handshake_capture_text_1"]="10.  Mass Handshake/PMKID Capture"
+	arr["PORTUGUESE","mass_handshake_capture_text_1"]="10.  Mass Handshake/PMKID Capture"
+	arr["RUSSIAN","mass_handshake_capture_text_1"]="10.  Mass Handshake/PMKID Capture"
+	arr["GREEK","mass_handshake_capture_text_1"]="10.  Mass Handshake/PMKID Capture"
+	arr["ITALIAN","mass_handshake_capture_text_1"]="10.  Mass Handshake/PMKID Capture"
+	arr["POLISH","mass_handshake_capture_text_1"]="10.  Mass Handshake/PMKID Capture"
+	arr["GERMAN","mass_handshake_capture_text_1"]="10.  Mass Handshake/PMKID Capture"
+	arr["TURKISH","mass_handshake_capture_text_1"]="10.  Mass Handshake/PMKID Capture"
+	arr["ARABIC","mass_handshake_capture_text_1"]="10.  Mass Handshake/PMKID Capture"
+	arr["CHINESE","mass_handshake_capture_text_1"]="10.  大规模 Handshake/PMKID 捕获"
 	
 	arr["ENGLISH","mass_handshake_capture_text_2"]="Mass Handshake/PMKID Capture"
 	arr["SPANISH","mass_handshake_capture_text_2"]="Captura masiva de Handshake/PMKID"
