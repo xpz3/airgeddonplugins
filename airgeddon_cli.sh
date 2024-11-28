@@ -284,8 +284,8 @@ function airgeddon_cli_override_start_airgeddon_from_tmux() {
 	debug_print
 
 	tmux rename-window -t "${session_name}" "${tmux_main_window}"
-	tmux send-keys -t "${session_name}:${tmux_main_window}" "clear;cd ${scriptfolder};bash ${scriptname} ${2}" ENTER
-	sleep 0.2
+	tmux send-keys -t "${session_name}:${tmux_main_window}" "clear;cd ${scriptfolder};bash ${scriptname} true ${airgeddon_uid}" ENTER
+ 	sleep 0.2
 	if [ "${1}" = "normal" ]; then
 		tmux attach -t "${session_name}"
 	else
@@ -311,8 +311,6 @@ function airgeddon_cli_override_create_tmux_session() {
 function airgeddon_cli_override_transfer_to_tmux() {
 
 	debug_print
-
-	close_existing_airgeddon_tmux_session
 
 	if ! check_inside_tmux; then
 		create_tmux_session "${session_name}" "true" "${1}"
