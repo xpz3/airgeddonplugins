@@ -61,7 +61,7 @@ function airgeddon_cli_get_absolute_script_path() {
 
 	if [ "${0}" != "${scriptname}" ];then
 		airgeddon_cli_relative_path=$(pwd)
-		cd "${mass_handshake_capture_relative_path}"
+		cd "${airgeddon_cli_relative_path}"
 		cd "${0%/*}"
 		airgeddon_cli_absolute_script_path=$(pwd)
 	else
