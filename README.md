@@ -1,4 +1,5 @@
 # airgeddonplugins
+<strong>Disclaimer: I won't be responsible for anything you use with these plugins. Please use them for educational purposes only</strong>
 
 <strong>Description</strong>
 
