@@ -25,15 +25,15 @@ plugin_distros_supported=("*")
 #AIRGEDDON_WINDOWS_HANDLING="nogui"
 
 #Color Variables
-	nogui_normal_color="\e[0;0m"
-	nogui_green_color="\033[0;32m"
-	nogui_red_color="\033[0;031m"
-	nogui_blue_color="\033[0;34m"
-	nogui_cyan_color="\033[0;36m"
-	nogui_brown_color="\033[0;33m"
-	nogui_yellow_color="\033[0;33m"
-	nogui_pink_color="\033[0;35m"
-	nogui_white_color="\e[1;97m"
+nogui_normal_color="\e[0;0m"
+nogui_green_color="\033[0;32m"
+nogui_red_color="\033[0;031m"
+nogui_blue_color="\033[0;34m"
+nogui_cyan_color="\033[0;36m"
+nogui_brown_color="\033[0;33m"
+nogui_yellow_color="\033[0;33m"
+nogui_pink_color="\033[0;35m"
+nogui_white_color="\e[1;97m"
 
 function add_color() {
 
