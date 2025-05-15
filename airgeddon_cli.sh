@@ -425,10 +425,10 @@ if [ "$#" -gt 0 ];then
 					echo "Handshake file doesn't exist. Quitting..."
 					exit
 				fi
-				if ! check_bssid_in_captured_file "${et_handshake}" "silent" "also_pmkid"; then
-					echo "BSSID and handshake file doesn't match. Quitting..."
-					exit
-				fi
+				#if ! check_bssid_in_captured_file "${et_handshake}" "silent" "also_pmkid"; then
+				#	echo "BSSID and handshake file doesn't match. Quitting..."
+				#	exit
+				#fi
 			fi
 			shift
 			;;
