@@ -1,4 +1,4 @@
-"#!/usr/bin/env bash
+#!/usr/bin/env bash
 
 #Global shellcheck disabled warnings
 #shellcheck disable=SC2034,SC2154
