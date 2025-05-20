@@ -10,7 +10,7 @@ plugin_author="xpz3"
 #Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="11.40"
+plugin_minimum_ag_affected_version="11.50"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
