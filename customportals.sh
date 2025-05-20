@@ -639,7 +639,7 @@ function customportals_override_set_captive_portal_language() {
 		language_strings "${language}" 519
 		language_strings "${language}" 687
 		language_strings "${language}" 717
-		print_hint ${current_menu}
+		print_hint
 
 		read -rp "> " captive_portal_language_selected
 		echo
@@ -757,7 +757,7 @@ function customportals_override_et_prerequisites() {
 	if [ "${dos_pursuit_mode}" -eq 1 ]; then
 		language_strings "${language}" 512 "blue"
 	fi
-	print_hint ${current_menu}
+	print_hint
 	echo
 
 	if [ "${et_mode}" != "et_captive_portal" ]; then
@@ -861,6 +861,18 @@ function customportals_override_et_prerequisites() {
 			fi
 		fi
 		ask_essid "noverify"
+	fi
+
+	if [ -n "${enterprise_mode}" ]; then
+		if ! validate_network_type "enterprise"; then
+			return_to_enterprise_main_menu=1
+			return
+		fi
+	else
+		if ! validate_network_type "personal"; then
+			return_to_et_main_menu=1
+			return
+		fi
 	fi
 
 	if [ -n "${enterprise_mode}" ]; then
