@@ -9,7 +9,7 @@ plugin_author="xpz3"
 
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="11.31"
+plugin_minimum_ag_affected_version="11.50"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -55,6 +55,7 @@ function airgeddon_cli_print_usage() {
 	echo $'\t[-v|-version|--version]\n\t\tPrints airgeddon version'
 	echo $'\t[-u|-usage|--usage]\n\t\tPrints usage'
 }
+
 function airgeddon_cli_get_absolute_script_path() {
 
 	debug_print
@@ -88,7 +89,7 @@ function airgeddon_cli_override_exec_et_captive_portal_attack() {
 
 	set_hostapd_config
 	launch_fake_ap
- 	set_network_interface_data
+	set_network_interface_data
 	set_dhcp_config
 	set_std_internet_routing_rules
 	launch_dhcp_server
@@ -129,7 +130,8 @@ function airgeddon_cli_read_target_values() {
 	enc=$(echo "${airgeddon_cli_values_from_file}" | awk '{split($0, airgeddon_cli_target_values,"|"); print airgeddon_cli_target_values[4]}')
 	et_handshake=$(echo "${airgeddon_cli_values_from_file}" | awk '{split($0, airgeddon_cli_target_values,"|"); print airgeddon_cli_target_values[5]}')
 }
-function airgeddon_cli_verify_parameters(){
+
+function airgeddon_cli_verify_parameters() {
 
 	debug_print
 
@@ -161,7 +163,7 @@ function airgeddon_cli_verify_parameters(){
 	fi
 }
 
-function airgeddon_cli_parse_parameters(){
+function airgeddon_cli_parse_parameters() {
 
 	debug_print
 
@@ -193,7 +195,7 @@ function airgeddon_cli_parse_parameters(){
 	main_menu
 }
 
-function airgeddon_cli_override_select_interface(){
+function airgeddon_cli_override_select_interface() {
 
 	debug_print
 
@@ -242,10 +244,10 @@ function airgeddon_cli_override_select_interface(){
 				fi
 			fi
 		done
-		print_hint ${current_menu}
+		print_hint
 
 		read -rp "> " iface
-		if [[ ! ${iface} =~ ^[[:digit:]]+$ ]] || (( iface < 1 || iface > option_counter )); then
+		if [[ ! ${iface} =~ ^[[:digit:]]+$ ]] || ((iface < 1 || iface > option_counter)); then
 			invalid_iface_selected
 		else
 			option_counter2=0
@@ -254,14 +256,23 @@ function airgeddon_cli_override_select_interface(){
 				if [ "${iface}" = "${option_counter2}" ]; then
 					interface=${item2}
 					phy_interface=$(physical_interface_finder "${interface}")
-					check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
 					interface_mac=$(ip link show "${interface}" | awk '/ether/ {print $2}')
-					if ! check_vif_support; then
-						card_vif_support=0
+					if [ -n "${phy_interface}" ]; then
+						check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
+						check_supported_standards "${phy_interface}"
+						if ! check_vif_support; then
+							adapter_vif_support=0
+						else
+							adapter_vif_support=1
+						fi
+						check_interface_wifi_longname "${interface}"
 					else
-						card_vif_support=1
+						adapter_vif_support=0
+						standard_80211n=0
+						standard_80211ac=0
+						standard_80211ax=0
+						standard_80211be=0
 					fi
-					check_interface_wifi_longname "${interface}"
 					break
 				fi
 			done
@@ -269,7 +280,7 @@ function airgeddon_cli_override_select_interface(){
 	fi
 }
 
-function airgeddon_cli_prehook_main_menu(){
+function airgeddon_cli_prehook_main_menu() {
 
 	debug_print
 	if [ "${airgeddon_cli_skip}" = 0 ];then
@@ -285,7 +296,7 @@ function airgeddon_cli_override_start_airgeddon_from_tmux() {
 
 	tmux rename-window -t "${session_name}" "${tmux_main_window}"
 	tmux send-keys -t "${session_name}:${tmux_main_window}" "clear;cd ${scriptfolder};bash ${scriptname} true ${airgeddon_uid}" ENTER
- 	sleep 0.2
+	sleep 0.2
 	if [ "${1}" = "normal" ]; then
 		tmux attach -t "${session_name}"
 	else
@@ -361,7 +372,7 @@ if [ "$#" -gt 0 ];then
 			fi
 			shift
 			;;
-		--cl) #Captive Portal password log path
+		--cl) # Captive Portal password log path
 			#set_default_save_path
 			airgeddon_cli_manage_captive_portal_log
 			et_captive_portal_logpath="${2:-$default_et_captive_portal_logpath}"
