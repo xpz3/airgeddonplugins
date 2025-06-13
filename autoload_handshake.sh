@@ -15,7 +15,7 @@ plugin_enabled=1
 ###### PLUGIN REQUIREMENTS ######
 
 #Set airgeddon versions to apply this plugin (leave blank to set no limits, minimum version recommended is 10.0 on which plugins feature was added)
-plugin_minimum_ag_affected_version="10.0"
+plugin_minimum_ag_affected_version="11.50"
 plugin_maximum_ag_affected_version=""
 
 #Set only one element in the array "*" to affect all distros, otherwise add them one by one with the name which airgeddon uses for that distro (examples "BlackArch", "Parrot", "Kali")
@@ -35,7 +35,6 @@ function autoload_handshake_override_ask_et_handshake_file() {
 	if [[ -z "${enteredpath}" ]] && [[ -z "${et_handshake}" ]]; then
 		ah_handshake_file="${ah_default_handshake_location}handshake-${bssid}.cap"
 		if [ -f "${ah_handshake_file}" ]; then
-			#language_strings "${language}" "autoload_handshake_text_1" "blue"
 			ask_yesno "autoload_handshake_text_1" "yes"
 			if [ "${yesno}" = "y" ]; then
 				et_handshake="${ah_handshake_file}"
@@ -75,9 +74,9 @@ function autoload_handshake_override_ask_et_handshake_file() {
 	fi
 }
 
-function initialize_ah_language_strings() {
-
-	debug_print
+#Prehook for hookable_for_languages function to modify language strings
+#shellcheck disable=SC1111
+function autoload_handshake_prehook_hookable_for_languages() {
 
 	arr["ENGLISH","autoload_handshake_text_1"]="An already captured handshake file was found in \${ah_default_handshake_location}. Do you want to use that file? \${normal_color}\${visual_choice}"
 	arr["SPANISH","autoload_handshake_text_1"]="Se encontró un archivo de handshake ya capturado en \${ah_default_handshake_location}. ¿Quieres usar ese archivo? \${normal_color}\${visual_choice}"
@@ -92,7 +91,4 @@ function initialize_ah_language_strings() {
 	arr["TURKISH","autoload_handshake_text_1"]="\${ah_default_handshake_location} konumunda önceden yakalanmış bir handshake dosyası bulundu. Bu dosyayı kullanmak istiyor musunuz? \${normal_color}\${visual_choice}"
 	arr["ARABIC","autoload_handshake_text_1"]="تم العثور على ملف handshake تم التقاطه بالفعل في \${ah_default_handshake_location}. هل تريد استخدام هذا الملف؟ \${normal_color}\${visual_choice}"
 	arr["CHINESE","autoload_handshake_text_1"]="在 \${ah_default_handshake_location} 中找到一个已捕获的握手文件。您想使用该文件吗？ \${normal_color}\${visual_choice}"
-
 }
-
-initialize_ah_language_strings
