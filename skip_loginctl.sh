@@ -9,7 +9,7 @@ plugin_author="xpz3"
 
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="10.0"
+plugin_minimum_ag_affected_version="11.11"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
