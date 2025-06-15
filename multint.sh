@@ -432,6 +432,55 @@ function multint_override_select_secondary_interface() {
 	fi
 }
 
+function multint_override_print_iface_selected() {
+
+	debug_print
+
+	if [ -z "${interface}" ]; then
+		language_strings "${language}" 41 "red"
+		echo
+		language_strings "${language}" 115 "read"
+		select_interface
+	else
+		if [ "${multint_enabled}" -eq 1 ]; then
+			check_interface_mode "${multint_ap_interface}"
+			if [ "${ifacemode}" = "(Non wifi adapter)" ]; then
+				language_strings "${language}" 42 "blue"
+			else
+				language_strings "${language}" "multint_text_4" "blue"
+			fi
+
+			check_interface_mode "${multint_deauth_interface}"
+			if [ "${ifacemode}" = "(Non wifi adapter)" ]; then
+				language_strings "${language}" 42 "blue"
+			else
+				language_strings "${language}" "multint_text_5" "blue"
+			fi
+		else
+			check_interface_mode "${interface}"
+			if [ "${ifacemode}" = "(Non wifi adapter)" ]; then
+				language_strings "${language}" 42 "blue"
+			else
+				language_strings "${language}" 514 "blue"
+			fi
+		fi
+	fi
+}
+
+function multint_posthook_managed_option() {
+
+	multint_deauth_interface="${interface}"
+
+	return 0
+}
+
+function multint_posthook_monitor_option() {
+
+	multint_deauth_interface="${interface}"
+
+	return 0
+}
+
 #Prehook for hookable_for_languages function to modify language strings
 #shellcheck disable=SC1111
 function multint_prehook_hookable_for_languages() {
@@ -477,4 +526,32 @@ function multint_prehook_hookable_for_languages() {
 	arr["TURKISH","multint_text_3"]="\${pending_of_translation} Aynı arayüzü iki kez seçemezsiniz"
 	arr["ARABIC","multint_text_3"]="\${pending_of_translation} لا يمكنك تحديد الواجهة نفسها مرتين"
 	arr["CHINESE","multint_text_3"]="\${pending_of_translation} 您不能两次选择相同的界面"
+
+	arr["ENGLISH","multint_text_4"]="AP Master Mode interface: \${pink_color}\${multint_ap_interface}\${blue_color} selected. Mode: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["SPANISH","multint_text_4"]="Interfaz AP Master Mode: \${pink_color}\${multint_ap_interface}\${blue_color} seleccionado. Modo: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["FRENCH","multint_text_4"]="\${pending_of_translation} Interface AP Master Mode: \${pink_color}\${multint_ap_interface}\${blue_color} sélectionné. Mode: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["CATALAN","multint_text_4"]="\${pending_of_translation} Interfície AP Master Mode: \${pink_color}\${multint_ap_interface}\${blue_color} seleccionat. Mode: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["PORTUGUESE","multint_text_4"]="\${pending_of_translation} Interface AP Master Mode: \${pink_color}\${multint_ap_interface}\${blue_color} selecionado. Modo: \${pink_color}\${ifacemode}\${blue_color}\${Normal_color}"
+	arr["RUSSIAN","multint_text_4"]="\${pending_of_translation} Интерфейс AP Master Mode: \${pink_color}\${multint_ap_interface}\${blue_color} Выбран. Режим: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["GREEK","multint_text_4"]="\${pending_of_translation} AP Master Mode διεπαφή: \${pink_color}\${multint_ap_interface}\${blue_color} Επιλεγμένη. Λειτουργία: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["ITALIAN","multint_text_4"]="\${pending_of_translation} Interfaccia AP Master Mode: \${pink_color}\${multint_ap_interface}\${blue_color} selezionato. MODE: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["POLISH","multint_text_4"]="\${pending_of_translation} Interfejs AP Master Mode: \${Pink_Color}\${multint_ap_interface}\${blue_color}. Tryb: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["GERMAN","multint_text_4"]="\${pending_of_translation} AP Master-Mode-Schnittstelle: \${pink_color}\${multint_ap_interface}\${blue_color} ausgewählt. Modus: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["TURKISH","multint_text_4"]="\${pending_of_translation} AP Master Mode arayüzü: \${pink_color}\${multint_ap_interface}\${blue_color} seçildi. Mod: \${pink_color}\${ifacemode}\${blue_color}.\${normal_color}"
+	arr["ARABIC","multint_text_4"]="\${pending_of_translation} AP واجهة الوضع الرئيسي: \${pink_color}\${multint_ap_interface}\${blue_color} المحدد. الوضع: \${pink_color}\${ifacemode}\${blue_color}.\${normal_color}"
+	arr["CHINESE","multint_text_4"]="\${pending_of_translation} AP 主模式接口：\${pink_color}\${multint_ap_interface}\${blue_color}选择。模式：\${pink_color}\${ifacemode}\${blue_color}。\${normal_color}"
+
+	arr["ENGLISH","multint_text_5"]="Deauth Monitor Mode interface: \${pink_color}\${multint_deauth_interface}\${blue_color} selected. Mode: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["SPANISH","multint_text_5"]="Interfaz Deauth Monitor Mode: \${pink_color}\${multint_deauth_interface}\${blue_color} seleccionado. Modo: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["FRENCH","multint_text_5"]="\${pending_of_translation} Interface Deauth Monitor Mode: \${pink_color}\${multint_deauth_interface}\${blue_color} sélectionné. Mode: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["CATALAN","multint_text_5"]="\${pending_of_translation} Interfície Deauth Monitor Mode: \${pink_color}\${multint_deauth_interface}\${blue_color} seleccionat. Mode: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["PORTUGUESE","multint_text_5"]="\${pending_of_translation} Interface Deauth Monitor Mode: \${pink_color}\${multint_deauth_interface}\${blue_color} selecionado. Modo: \${pink_color}\${ifacemode}\${blue_color}\${Normal_color}"
+	arr["RUSSIAN","multint_text_5"]="\${pending_of_translation} Интерфейс Deauth Monitor Mode: \${pink_color}\${multint_deauth_interface}\${blue_color} Выбран. Режим: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["GREEK","multint_text_5"]="\${pending_of_translation} Deauth Monitor Mode διεπαφή: \${pink_color}\${multint_deauth_interface}\${blue_color} Επιλεγμένη. Λειτουργία: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["ITALIAN","multint_text_5"]="\${pending_of_translation} Interfaccia Deauth Monitor Mode: \${pink_color}\${multint_deauth_interface}\${blue_color} selezionato. MODE: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["POLISH","multint_text_5"]="\${pending_of_translation} Interfejs Deauth Monitor Mode: \${Pink_Color}\${multint_deauth_interface}\${blue_color}. Tryb: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["GERMAN","multint_text_5"]="\${pending_of_translation} Deauth Monitor-Mode-Schnittstelle: \${pink_color}\${multint_deauth_interface}\${blue_color} ausgewählt. Modus: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["TURKISH","multint_text_5"]="\${pending_of_translation} Deauth Monitor Mode arayüzü: \${pink_color}\${multint_deauth_interface}\${blue_color} seçildi. Mod: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["ARABIC","multint_text_5"]="\${pending_of_translation} واجهة الوضع الرئيسيDeauth Monitor: \${pink_color}\${multint_deauth_interface}\${blue_color} المحدد. الوضع: \${pink_color}\${ifacemode}\${blue_color}\${normal_color}"
+	arr["CHINESE","multint_text_5"]="\${pending_of_translation} Deauth Monitor主模式接口：\${pink_color}\${multint_deauth_interface}\${blue_color}选择。模式：\${pink_color}\${ifacemode}\${blue_color}。\${normal_color}"
 }
