@@ -15,7 +15,7 @@ plugin_enabled=1
 ###### PLUGIN REQUIREMENTS ######
 
 #Set airgeddon versions to apply this plugin (leave blank to set no limits, minimum version recommended is 10.0 on which plugins feature was added)
-plugin_minimum_ag_affected_version="11.31"
+plugin_minimum_ag_affected_version="11.50"
 plugin_maximum_ag_affected_version=""
 
 #Set only one element in the array "*" to affect all distros, otherwise add them one by one with the name which airgeddon uses for that distro (examples "BlackArch", "Parrot", "Kali")
@@ -28,9 +28,8 @@ function multint_override_select_interface() {
 	local interface_menu_band
 	local multintcounter=0
 	multint_enabled=1
-	
-	while [ "${multintcounter}" -lt 2 ]
-	do
+
+	while [ "${multintcounter}" -lt 2 ]; do
 		clear
 		language_strings "${language}" 88 "title"
 		current_menu="select_interface_menu"
@@ -75,17 +74,16 @@ function multint_override_select_interface() {
 				fi
 			fi
 		done
-		print_hint ${current_menu}
+		print_hint
 
 		read -rp "> " iface
-		if [[ ! ${iface} =~ ^[[:digit:]]+$ ]] || (( iface < 1 || iface > option_counter )); then
+		if [[ ! ${iface} =~ ^[[:digit:]]+$ ]] || ((iface < 1 || iface > option_counter)); then
 			invalid_iface_selected
 		else
 			option_counter2=0
 			for item2 in ${ifaces}; do
 				option_counter2=$((option_counter2 + 1))
 				if [[ "${iface}" = "${option_counter2}" ]]; then
-					
 					if [ "${multintcounter}" -eq 0 ]; then
 						multint_ap_interface="${item2}"
 						current_iface_on_messages="${multint_ap_interface}"
@@ -101,10 +99,19 @@ function multint_override_select_interface() {
 						current_iface_on_messages="${multint_deauth_interface}"
 						interface=${item2}
 						phy_interface=$(physical_interface_finder "${interface}")
-						check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
 						interface_mac=$(ip link show "${interface}" | awk '/ether/ {print $2}')
-						card_vif_support=1 #Suppress VIF not supported message as we are using two separate cards
-						check_interface_wifi_longname "${interface}"
+						if [ -n "${phy_interface}" ]; then
+							check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
+							check_supported_standards "${phy_interface}"
+							adapter_vif_support=1 #Suppress VIF not supported message as we are using two separate cards
+							check_interface_wifi_longname "${interface}"
+						else
+							adapter_vif_support=0
+							standard_80211n=0
+							standard_80211ac=0
+							standard_80211ax=0
+							standard_80211be=0
+						fi
 						break
 					fi
 				fi
@@ -142,7 +149,7 @@ function multint_override_prepare_et_interface() {
 	debug_print
 
 	et_initial_state=${ifacemode}
-	
+
 	if [ "${multint_enabled}" -eq 1 ]; then
 		ifacemode="Managed"
 		multint_deauth_interface="${interface}"
@@ -152,6 +159,7 @@ function multint_override_prepare_et_interface() {
 	if [ "${ifacemode}" != "Managed" ]; then
 		check_airmon_compatibility "interface"
 		if [ "${interface_airmon_compatible}" -eq 1 ]; then
+
 			new_interface=$(${airmon} stop "${interface}" 2> /dev/null | grep station | head -n 1)
 			ifacemode="Managed"
 			[[ ${new_interface} =~ \]?([A-Za-z0-9]+)\)?$ ]] && new_interface="${BASH_REMATCH[1]}"
@@ -195,7 +203,9 @@ function multint_override_restore_et_interface() {
 	disable_rfkill
 
 	mac_spoofing_desired=0
-	
+
+	iw dev "${iface_monitor_et_deauth}" del > /dev/null 2>&1
+
 	ip addr del "${et_ip_router}/${std_c_mask}" dev "${interface}" > /dev/null 2>&1
 	ip route del "${et_ip_range}/${std_c_mask_cidr}" dev "${interface}" table local proto static scope link > /dev/null 2>&1
 
@@ -231,6 +241,7 @@ function multint_override_restore_et_interface() {
 			fi
 		fi
 	fi
+
 	control_routing_status "end"
 }
 
@@ -376,7 +387,7 @@ function multint_override_select_secondary_interface() {
 	if [ ${option_counter: -1} -eq 9 ]; then
 		spaceiface+=" "
 	fi
-	print_hint ${current_menu}
+	print_hint
 
 	read -rp "> " secondary_iface
 	if [ "${secondary_iface}" -eq 0 ] 2> /dev/null; then
@@ -412,37 +423,35 @@ function multint_override_select_secondary_interface() {
 	fi
 }
 
-function initialize_multint_language_strings() {
-
-	debug_print
+#Prehook for hookable_for_languages function to modify language strings
+#shellcheck disable=SC1111
+function multint_prehook_hookable_for_languages() {
 
 	arr["ENGLISH","multint_text_1"]="Select an interface for AP (Master Mode):"
 	arr["SPANISH","multint_text_1"]="Selecciona una interfaz para AP (Master Mode):"
-	arr["FRENCH","multint_text_1"]="Sélectionnez une interface pour AP (Master Mode) :"
-	arr["CATALAN","multint_text_1"]="Seleccioneu una interfície per a AP (Master Mode):"
-	arr["PORTUGUESE","multint_text_1"]="Selecione uma interface para AP (Master Mode):"
-	arr["RUSSIAN","multint_text_1"]="Выберите интерфейс для AP (Master Mode):"
-	arr["GREEK","multint_text_1"]="Επιλέξτε μια διεπαφή για AP (Master Mode):"
-	arr["ITALIAN","multint_text_1"]="Seleziona un'interfaccia per AP (Master Mode):"
-	arr["POLISH","multint_text_1"]="Wybierz interfejs dla AP (Master Mode):"
-	arr["GERMAN","multint_text_1"]="Wählen Sie eine Schnittstelle für AP (Master Mode):"
-	arr["TURKISH","multint_text_1"]="AP (Master Mode) için bir arayüz seçin:"
-	arr["ARABIC","multint_text_1"]="حدد واجهة لـ AP (Master Mode):"
-	arr["CHINESE","multint_text_1"]="请选择一个接口用于 AP (Master Mode):"
+	arr["FRENCH","multint_text_1"]="\${pending_of_translation} Sélectionnez une interface pour AP (Master Mode):"
+	arr["CATALAN","multint_text_1"]="\${pending_of_translation} Seleccioneu una interfície per a AP (Master Mode):"
+	arr["PORTUGUESE","multint_text_1"]="\${pending_of_translation} Selecione uma interface para AP (Master Mode):"
+	arr["RUSSIAN","multint_text_1"]="\${pending_of_translation} Выберите интерфейс для AP (Master Mode):"
+	arr["GREEK","multint_text_1"]="\${pending_of_translation} Επιλέξτε μια διεπαφή για AP (Master Mode):"
+	arr["ITALIAN","multint_text_1"]="\${pending_of_translation} Seleziona un'interfaccia per AP (Master Mode):"
+	arr["POLISH","multint_text_1"]="\${pending_of_translation} Wybierz interfejs dla AP (Master Mode):"
+	arr["GERMAN","multint_text_1"]="\${pending_of_translation} Wählen Sie eine Schnittstelle für AP (Master Mode) aus:"
+	arr["TURKISH","multint_text_1"]="\${pending_of_translation} AP için bir arayüz seçin (Master Mode):"
+	arr["ARABIC","multint_text_1"]="\${pending_of_translation} حدد واجهة لـ AP (Master Mode):"
+	arr["CHINESE","multint_text_1"]="\${pending_of_translation} 选择一个AP（Master Mode）的接口："
 
 	arr["ENGLISH","multint_text_2"]="Select an interface for Deauth (Monitor Mode):"
 	arr["SPANISH","multint_text_2"]="Selecciona una interfaz para Deauth (Monitor Mode):"
-	arr["FRENCH","multint_text_2"]="Sélectionnez une interface pour Deauth (Monitor Mode) :"
-	arr["CATALAN","multint_text_2"]="Seleccioneu una interfície per a Deauth (Monitor Mode:"
-	arr["PORTUGUESE","multint_text_2"]="Selecione uma interface para Deauth (Monitor Mode):"
-	arr["RUSSIAN","multint_text_2"]="Выберите интерфейс для and Deauth (Monitor Mode):"
-	arr["GREEK","multint_text_2"]="Επιλέξτε μια διεπαφή για Deauth (Monitor Mode):"
-	arr["ITALIAN","multint_text_2"]="Seleziona un'interfaccia per Deauth (Monitor Mode):"
-	arr["POLISH","multint_text_2"]="Wybierz interfejs dla Deauth (Monitor Mode):"
-	arr["GERMAN","multint_text_2"]="Wählen Sie eine Schnittstelle für Deauth (Monitor Mode):"
-	arr["TURKISH","multint_text_2"]="Deauth (Monitor Mode) için bir arayüz seçin:"
-	arr["ARABIC","multint_text_2"]="حدد واجهة لـ Deauth (Monitor Mode):"
-	arr["CHINESE","multint_text_2"]="请选择一个接口用于 Deauth (Monitor Mode):"
+	arr["FRENCH","multint_text_2"]="\${pending_of_translation} Sélectionnez une interface pour DeAuth (Monitor Mode):"
+	arr["CATALAN","multint_text_2"]="\${pending_of_translation} Seleccioneu una interfície per a DeAuth (Monitor Mode):"
+	arr["PORTUGUESE","multint_text_2"]="\${pending_of_translation} Selecione uma interface para Deauth (Monitor Mode):"
+	arr["RUSSIAN","multint_text_2"]="\${pending_of_translation} Выберите интерфейс для Deauth (Monitor Mode):"
+	arr["GREEK","multint_text_2"]="\${pending_of_translation} Επιλέξτε μια διεπαφή για το Deauth (Monitor Mode):"
+	arr["ITALIAN","multint_text_2"]="\${pending_of_translation} Seleziona un'interfaccia per Deauth (Monitor Mode):"
+	arr["POLISH","multint_text_2"]="\${pending_of_translation} Wybierz interfejs Deauth (Monitor Mode):"
+	arr["GERMAN","multint_text_2"]="\${pending_of_translation} Wählen Sie eine Schnittstelle für Deauth (Monitor Mode) aus:"
+	arr["TURKISH","multint_text_2"]="\${pending_of_translation} Deauth için bir arayüz seçin (Monitor Mode):"
+	arr["ARABIC","multint_text_2"]="\${pending_of_translation} حدد واجهة لـ Deauth (Monitor Mode):"
+	arr["CHINESE","multint_text_2"]="\${pending_of_translation} 选择Deauth（Monitor Mode）的接口："
 }
-
-initialize_multint_language_strings
