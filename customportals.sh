@@ -201,22 +201,6 @@ function customportals_override_set_webserver_config() {
 	echo -e "url.redirect = ( \"^/index.htm$\" => \"/\")"
 	echo -e "url.redirect-code = 302"
 	echo -e "}"
-	echo -e "\$HTTP[\"host\"] =~ \"gstatic.com\" {"
-	echo -e "url.redirect = ( \"^/(.*)$\" => \"http://connectivitycheck.google.com/\")"
-	echo -e "url.redirect-code = 302"
-	echo -e "}"
-	echo -e "\$HTTP[\"host\"] =~ \"captive.apple.com\" {"
-	echo -e "url.redirect = ( \"^/(.*)$\" => \"http://connectivitycheck.apple.com/\")"
-	echo -e "url.redirect-code = 302"
-	echo -e "}"
-	echo -e "\$HTTP[\"host\"] =~ \"msftconnecttest.com\" {"
-	echo -e "url.redirect = ( \"^/(.*)$\" => \"http://connectivitycheck.microsoft.com/\")"
-	echo -e "url.redirect-code = 302"
-	echo -e "}"
-	echo -e "\$HTTP[\"host\"] =~ \"msftncsi.com\" {"
-	echo -e "url.redirect = ( \"^/(.*)$\" => \"http://connectivitycheck.microsoft.com/\")"
-	echo -e "url.redirect-code = 302"
-	echo -e "}"
 	echo -e "server.bind = \"${et_ip_router}\""
 	echo -e "server.port = ${www_port}\n"
 	echo -e "index-file.names = (\"${indexfile}\")"
@@ -228,9 +212,11 @@ function customportals_override_set_webserver_config() {
 	echo -e ")\n"
 	echo -e "cgi.assign = (\".htm\" => \"/bin/bash\""
 	} >> "${tmpdir}${webserver_file}"
+
 	if [ "${customportals_php_handle}" -eq 1 ]; then
 		echo -e ",\".php\" => \"/bin/bash\"" >> "${tmpdir}${webserver_file}"
 	fi
+
 	{
 	echo -e ")\n"
 	echo -e "accesslog.filename = \"${tmpdir}${webserver_log}\""
@@ -302,29 +288,27 @@ function customportals_override_set_captive_portal_page() {
 		{
 		echo -e "(function() {\n"
 		echo -e "\tvar onLoad = function() {"
-		echo -e "\t\tvar formElement = document.getElementById(\"loginform\");"
-		echo -e "\t\tif (formElement != null) {"
-		echo -e "\t\t\tvar password = document.getElementById(\"password\");"
-		echo -e "\t\t\tvar showpass = function() {"
-		echo -e "\t\t\t\tpassword.setAttribute(\"type\", password.type == \"text\" ? \"password\" : \"text\");"
-		echo -e "\t\t\t}"
-		echo -e "\t\t\tdocument.getElementById(\"showpass\").addEventListener(\"click\", showpass);"
-		echo -e "\t\t\tdocument.getElementById(\"showpass\").checked = false;\n"
-		echo -e "\t\t\tvar validatepass = function() {"
-		echo -e "\t\t\t\tif (password.value.length < 8) {"
-		echo -e "\t\t\t\t\talert(\"${et_misc_texts[${captive_portal_language},16]}\");"
-		echo -e "\t\t\t\t}"
-		echo -e "\t\t\t\telse {"
-		echo -e "\t\t\t\t\tformElement.submit();"
-		echo -e "\t\t\t\t}"
-		echo -e "\t\t\t}"
-		echo -e "\t\t\tdocument.getElementById(\"formbutton\").addEventListener(\"click\", validatepass);"
+		echo -e "\t\tvar password = document.getElementById(\"password\");"
+		echo -e "\t\tvar toggle = document.getElementById(\"showpass\");"
+		echo -e "\t\tif (password) {"
+		echo -e "\t\t\tpassword.oninvalid = function() {"
+		echo -e "\t\t\t\tthis.setCustomValidity(\"${et_misc_texts[${captive_portal_language},16]}\");"
+		echo -e "\t\t\t};"
+		echo -e "\t\t\tpassword.oninput = function() {"
+		echo -e "\t\t\t\tthis.setCustomValidity(\"\");"
+		echo -e "\t\t\t};"
+		echo -e "\t\t}\n"
+		echo -e "\t\tif (password && toggle) {"
+		echo -e "\t\t\ttoggle.addEventListener(\"click\", function() {"
+		echo -e "\t\t\t\tpassword.setAttribute(\"type\", password.type === \"text\" ? \"password\" : \"text\");"
+		echo -e "\t\t\t});"
+		echo -e "\t\t\ttoggle.checked = false;"
 		echo -e "\t\t}"
 		echo -e "\t};\n"
-		echo -e "\tdocument.readyState != 'loading' ? onLoad() : document.addEventListener('DOMContentLoaded', onLoad);"
+		echo -e "\tif (document.readyState !== 'loading') onLoad(); else document.addEventListener('DOMContentLoaded', onLoad);"
 		echo -e "})();\n"
 		echo -e "function redirect() {"
-		echo -e "\ttop.location.href = \"${indexfile}\";"
+		echo -e "\tdocument.location = \"${indexfile}\";"
 		echo -e "}\n"
 		echo -e "function redirecterror() {"
 		echo -e "\tdocument.location = \"${customportals_errorhtml}\";"
@@ -425,26 +409,25 @@ function customportals_override_set_captive_portal_page() {
 		{
 		echo -e "(function() {\n"
 		echo -e "\tvar onLoad = function() {"
-		echo -e "\t\tvar formElement = document.getElementById(\"loginform\");"
-		echo -e "\t\tif (formElement != null) {"
-		echo -e "\t\t\tvar password = document.getElementById(\"password\");"
-		echo -e "\t\t\tvar showpass = function() {"
-		echo -e "\t\t\t\tpassword.setAttribute(\"type\", password.type == \"text\" ? \"password\" : \"text\");"
-		echo -e "\t\t\t}"
-		echo -e "\t\t\tdocument.getElementById(\"showpass\").addEventListener(\"click\", showpass);"
-		echo -e "\t\t\tdocument.getElementById(\"showpass\").checked = false;\n"
-		echo -e "\t\t\tvar validatepass = function() {"
-		echo -e "\t\t\t\tif (password.value.length < 8) {"
-		echo -e "\t\t\t\t\talert(\"${et_misc_texts[${captive_portal_language},16]}\");"
-		echo -e "\t\t\t\t}"
-		echo -e "\t\t\t\telse {"
-		echo -e "\t\t\t\t\tformElement.submit();"
-		echo -e "\t\t\t\t}"
-		echo -e "\t\t\t}"
-		echo -e "\t\t\tdocument.getElementById(\"formbutton\").addEventListener(\"click\", validatepass);"
+		echo -e "\t\tvar password = document.getElementById(\"password\");"
+		echo -e "\t\tvar toggle = document.getElementById(\"showpass\");"
+
+		echo -e "\t\tif (password) {"
+		echo -e "\t\t\tpassword.oninvalid = function() {"
+		echo -e "\t\t\t\tthis.setCustomValidity(\"${et_misc_texts[${captive_portal_language},16]}\");"
+		echo -e "\t\t\t};"
+		echo -e "\t\t\tpassword.oninput = function() {"
+		echo -e "\t\t\t\tthis.setCustomValidity(\"\");"
+		echo -e "\t\t\t};"
+		echo -e "\t\t}\n"
+		echo -e "\t\tif (password && toggle) {"
+		echo -e "\t\t\ttoggle.addEventListener(\"click\", function() {"
+		echo -e "\t\t\t\tpassword.setAttribute(\"type\", password.type === \"text\" ? \"password\" : \"text\");"
+		echo -e "\t\t\t});"
+		echo -e "\t\t\ttoggle.checked = false;"
 		echo -e "\t\t}"
 		echo -e "\t};\n"
-		echo -e "\tdocument.readyState != 'loading' ? onLoad() : document.addEventListener('DOMContentLoaded', onLoad);"
+		echo -e "\tif (document.readyState !== 'loading') onLoad(); else document.addEventListener('DOMContentLoaded', onLoad);"
 		echo -e "})();\n"
 		echo -e "function redirect() {"
 		echo -e "\tdocument.location = \"${indexfile}\";"
@@ -475,10 +458,10 @@ function customportals_override_set_captive_portal_page() {
 		echo -e "echo -e '\t\t\t\t</div>'"
 		echo -e "echo -e '\t\t\t\t<p>${et_misc_texts[${captive_portal_language},10]}</p>'"
 		echo -e "echo -e '\t\t\t\t<label>'"
-		echo -e "echo -e '\t\t\t\t\t<input id=\"password\" type=\"password\" name=\"password\" maxlength=\"63\" size=\"20\" placeholder=\"${et_misc_texts[${captive_portal_language},11]}\"/><br/>'"
+		echo -e "echo -e '\t\t\t\t\t<input id=\"password\" type=\"password\" name=\"password\" maxlength=\"63\" size=\"20\" placeholder=\"${et_misc_texts[${captive_portal_language},11]}\" pattern=\".{8,}\" required/><br/>'"
 		echo -e "echo -e '\t\t\t\t</label>'"
 		echo -e "echo -e '\t\t\t\t<p>${et_misc_texts[${captive_portal_language},12]} <input type=\"checkbox\" id=\"showpass\"/></p>'"
-		echo -e "echo -e '\t\t\t\t<input class=\"button\" id=\"formbutton\" type=\"button\" value=\"${et_misc_texts[${captive_portal_language},13]}\"/>'"
+		echo -e "echo -e '\t\t\t\t<button class=\"button\" type=\"submit\">${et_misc_texts[${captive_portal_language},13]}</button>'"
 		echo -e "echo -e '\t\t\t</form>'"
 		echo -e "echo -e '\t\t</div>'"
 		echo -e "echo -e '\t</body>'"
@@ -562,13 +545,9 @@ function customportals_override_set_captive_portal_language() {
 	print_iface_selected
 	print_et_target_vars
 	print_iface_internet_selected
-	captive_portal_language="ENGLISH"
-	echo
 
-	language_strings "${language}" "customportals_text_1" "blue"
-	read -rp ">" customportals_enable
-	
-	if [[ "${customportals_enable}" == "Y" ]] ||  [[ "${customportals_enable}" == "y" ]]; then
+	ask_yesno "customportals_text_1" "no"
+	if [ "${yesno}" = "y" ]; then
 		customportals_enabled=1
 		if [ -z "${customportals_portal_directory}" ]; then
 			customportals_portal_directory="${customportals_absolute_script_path}"plugins/customportals/
@@ -586,23 +565,30 @@ function customportals_override_set_captive_portal_language() {
 		done
 
 		if [ ${#custom_portals[@]} -eq 0 ]; then
+			echo
 			language_strings "${language}" "customportals_text_3" "red"
+			echo
+			language_strings "${language}" 115 "read"
 			customportals_enabled=0
 			return_to_et_main_menu=1
 			return 1
 		fi
 
+		echo
 		language_strings "${language}" "customportals_text_2" "blue"
-	
+
 		for i in "${!custom_portals[@]}"; do
 			echo "$((i + 1)). ${custom_portals[i]}"
 		done
 
-		language_strings "${language}" "customportals_text_4" "blue"
-		read -r selection
+		echo
+		language_strings "${language}" "customportals_text_4" "green"
+		local customportal_selection
+		read -r customportal_selection
 
-		if [[ "${selection}" =~ ^[0-9]+$ ]] && [ "${selection}" -ge 1 ] && [ "${selection}" -le "${#custom_portals[@]}" ]; then
-			customportals_selected_portal="${custom_portals[$((selection - 1))]}"
+		if [[ "${customportal_selection}" =~ ^[0-9]+$ ]] && [ "${customportal_selection}" -ge 1 ] && [ "${customportal_selection}" -le "${#custom_portals[@]}" ]; then
+			customportals_selected_portal="${custom_portals[$((customportal_selection - 1))]}"
+
 			language_strings "${language}" "customportals_text_5" "green"
 
 			if [[ "${customportals_selected_portal}" == "ARRIS_en.portal" || "${customportals_selected_portal}" == "Technicolor_en.portal" ]];then
@@ -611,11 +597,16 @@ function customportals_override_set_captive_portal_language() {
 				customportals_jsonresponseenable=true
 			fi
 		else
+			echo
 			language_strings "${language}" "customportals_text_6" "red"
+			echo
+			language_strings "${language}" 115 "read"
 			customportals_enabled=0
-			set_captive_portal_language
+			return_to_et_main_menu=1
+			return 1
 		fi
 	else
+		customportals_enabled=0
 		clear
 		language_strings "${language}" 293 "title"
 		print_iface_selected
@@ -692,6 +683,7 @@ function customportals_override_set_captive_portal_language() {
 			;;
 		esac
 	fi
+
 	return 0
 }
 
@@ -892,6 +884,7 @@ function customportals_override_et_prerequisites() {
 					advanced_captive_portal=1
 				fi
 			fi
+
 			prepare_captive_portal_data
 
 			echo
@@ -975,94 +968,93 @@ function customportals_override_et_prerequisites() {
 	fi
 }
 
-function initialize_customportals_language_strings() {
+#Prehook for hookable_for_languages function to modify language strings
+#shellcheck disable=SC1111
+function customportals_prehook_hookable_for_languages() {
 
-	debug_print
-	
-	arr["ENGLISH","customportals_text_1"]="Do you want to choose a custom portal?(y/N) "
-	arr["SPANISH","customportals_text_1"]="¿Quieres elegir un portal personalizado? (y/N) "
-	arr["FRENCH","customportals_text_1"]="Voulez-vous choisir un portail personnalisé ? (y/N) "
-	arr["CATALAN","customportals_text_1"]="Vols triar un portal personalitzat? (y/N) "
-	arr["PORTUGUESE","customportals_text_1"]="Você quer escolher um portal personalizado? (y/N) "
-	arr["RUSSIAN","customportals_text_1"]="Вы хотите выбрать пользовательский портал? (y/N) "
-	arr["GREEK","customportals_text_1"]="Θέλετε να επιλέξετε μια προσαρμοσμένη πύλη; (y/N) "
-	arr["ITALIAN","customportals_text_1"]="Vuoi scegliere un portale personalizzato? (y/N) "
-	arr["POLISH","customportals_text_1"]="Czy chcesz wybrać niestandardowy portal? (y/N) "
-	arr["GERMAN","customportals_text_1"]="Möchten Sie ein benutzerdefiniertes Portal auswählen? (y/N) "
-	arr["TURKISH","customportals_text_1"]="Özel bir portal seçmek istiyor musunuz? (y/N) "
-	arr["ARABIC","customportals_text_1"]="هل تريد اختيار بوابة مخصصة؟ (y/N) "
-	arr["CHINESE","customportals_text_1"]="您要选择一个自定义门户吗？（y/N）"
+	arr["ENGLISH","customportals_text_1"]="Do you want to choose a custom portal? \${normal_color}\${visual_choice}"
+	arr["SPANISH","customportals_text_1"]="¿Quieres elegir un portal personalizado? \${normal_color}\${visual_choice}"
+	arr["FRENCH","customportals_text_1"]="\${pending_of_translation} Voulez-vous choisir un portail personnalisé? \${normal_color}\${visual_choice}"
+	arr["CATALAN","customportals_text_1"]="\${pending_of_translation} Voleu triar un portal personalitzat? \${normal_color}\${visual_choice}"
+	arr["PORTUGUESE","customportals_text_1"]="\${pending_of_translation} Quer escolher um portal personalizado? \${normal_color}\${visual_choice}"
+	arr["RUSSIAN","customportals_text_1"]="\${pending_of_translation} Вы хотите выбрать пользовательский портал? \${normal_color}\${visual_choice}"
+	arr["GREEK","customportals_text_1"]="\${pending_of_translation} Θέλετε να επιλέξετε μια προσαρμοσμένη πύλη; \${normal_color}\${visual_choice}"
+	arr["ITALIAN","customportals_text_1"]="\${pending_of_translation} Vuoi scegliere un portale personalizzato? \${normal_color}\${visual_choice}"
+	arr["POLISH","customportals_text_1"]="\${pending_of_translation} Czy chcesz wybrać niestandardowy portal? \${normal_color}\${visual_choice}"
+	arr["GERMAN","customportals_text_1"]="\${pending_of_translation} Möchten Sie ein benutzerdefiniertes Portal auswählen? \${normal_color}\${visual_choice}"
+	arr["TURKISH","customportals_text_1"]="\${pending_of_translation} Özel bir portal seçmek ister misiniz? \${normal_color}\${visual_choice}"
+	arr["ARABIC","customportals_text_1"]="\${pending_of_translation} \${normal_color}\${visual_choice}\${green_color} هل تريد اختيار بوابة مخصصة؟\${normal_color}"
+	arr["CHINESE","customportals_text_1"]="\${pending_of_translation} 您想选择自定义门户吗？ \${normal_color}\${visual_choice}"
 
 	arr["ENGLISH","customportals_text_2"]="Please choose from the following available portals"
-	arr["SPANISH","customportals_text_2"]="Por favor elija entre los siguientes portales disponibles"
-	arr["FRENCH","customportals_text_2"]="Veuillez choisir parmi les portails disponibles suivants"
-	arr["CATALAN","customportals_text_2"]="Si us plau, trieu entre els portals disponibles següents"
-	arr["PORTUGUESE","customportals_text_2"]="Por favor escolha entre os seguintes portais disponíveis"
-	arr["RUSSIAN","customportals_text_2"]="Пожалуйста, выберите из следующих доступных порталов"
-	arr["GREEK","customportals_text_2"]="Επιλέξτε από τις παρακάτω διαθέσιμες πύλες"
-	arr["ITALIAN","customportals_text_2"]="Si prega di scegliere tra i seguenti portali disponibili"
-	arr["POLISH","customportals_text_2"]="Wybierz spośród następujących dostępnych portali"
-	arr["GERMAN","customportals_text_2"]="Bitte wählen Sie aus den folgenden verfügbaren Portalen"
-	arr["TURKISH","customportals_text_2"]="Lütfen aşağıdaki mevcut portallardan birini seçin"
-	arr["ARABIC","customportals_text_2"]="يرجى الاختيار من بين البوابات المتاحة التالية"
-	arr["CHINESE","customportals_text_2"]="请选择以下可用门户"
+	arr["SPANISH","customportals_text_2"]="Elige entre los siguientes portales disponibles"
+	arr["FRENCH","customportals_text_2"]="\${pending_of_translation} Veuillez choisir parmi les portails disponibles suivants"
+	arr["CATALAN","customportals_text_2"]="\${pending_of_translation} Trieu entre els portals disponibles següents"
+	arr["PORTUGUESE","customportals_text_2"]="\${pending_of_translation} Escolha entre os seguintes portais disponíveis"
+	arr["RUSSIAN","customportals_text_2"]="\${pending_of_translation} Пожалуйста, выберите из следующих доступных порталов"
+	arr["GREEK","customportals_text_2"]="\${pending_of_translation} Επιλέξτε από τις παρακάτω διαθέσιμες πύλες"
+	arr["ITALIAN","customportals_text_2"]="\${pending_of_translation} Scegli tra i seguenti portali disponibili"
+	arr["POLISH","customportals_text_2"]="\${pending_of_translation} Wybierz z następujących dostępnych portali"
+	arr["GERMAN","customportals_text_2"]="\${pending_of_translation} Bitte wählen Sie aus den folgenden verfügbaren Portalen"
+	arr["TURKISH","customportals_text_2"]="\${pending_of_translation} Lütfen aşağıdaki mevcut portallardan seçim yapın"
+	arr["ARABIC","customportals_text_2"]="\${pending_of_translation} الرجاء الاختيار من بين البوابات المتاحة التالية"
+	arr["CHINESE","customportals_text_2"]="\${pending_of_translation} 请从以下可用门户中选择"
 
 	arr["ENGLISH","customportals_text_3"]="No captive portals found in the chosen directory"
-	arr["SPANISH","customportals_text_3"]="No se encontraron portales cautivos en el directorio elegido"
-	arr["FRENCH","customportals_text_3"]="Aucun portail captif trouvé dans le répertoire choisi"
-	arr["CATALAN","customportals_text_3"]="No s'han trobat portals capturats al directori triat"
-	arr["PORTUGUESE","customportals_text_3"]="Nenhum portal cativo encontrado no diretório escolhido"
-	arr["RUSSIAN","customportals_text_3"]="В выбранной директории не найдено порталов"
-	arr["GREEK","customportals_text_3"]="Δεν βρέθηκαν πύλες στο επιλεγμένο φάκελο"
-	arr["ITALIAN","customportals_text_3"]="Nessun portale trovato nella directory scelta"
-	arr["POLISH","customportals_text_3"]="Nie znaleziono portali w wybranym katalogu"
-	arr["GERMAN","customportals_text_3"]="Keine Portale im gewählten Verzeichnis gefunden"
-	arr["TURKISH","customportals_text_3"]="Seçilen dizinde portal bulunamadı"
-	arr["ARABIC","customportals_text_3"]="لم يتم العثور على أي بوابات في الدليل المختار"
-	arr["CHINESE","customportals_text_3"]="在所选目录中未找到任何门户"
+	arr["SPANISH","customportals_text_3"]="No se encuentran portales cautivos en el directorio elegido"
+	arr["FRENCH","customportals_text_3"]="\${pending_of_translation} Pas de portails captifs trouvés dans le répertoire choisi"
+	arr["CATALAN","customportals_text_3"]="\${pending_of_translation} No hi ha portals en captivitat al directori escollit"
+	arr["PORTUGUESE","customportals_text_3"]="\${pending_of_translation} Nenhum porta -cativo encontrado no diretório escolhido"
+	arr["RUSSIAN","customportals_text_3"]="\${pending_of_translation} Порталов не обнаружены в выбранном каталоге"
+	arr["GREEK","customportals_text_3"]="\${pending_of_translation} Δεν βρέθηκαν αιχμάλωτες πύλες στον επιλεγμένο κατάλογο"
+	arr["ITALIAN","customportals_text_3"]="\${pending_of_translation} Nessun portali in cattività trovati nella directory prescelta"
+	arr["POLISH","customportals_text_3"]="\${pending_of_translation} Nie znaleziono portali w niewoli w wybranym katalogu"
+	arr["GERMAN","customportals_text_3"]="\${pending_of_translation} Kein in Gefangenschaftsportalen im gewählten Verzeichnis gefunden"
+	arr["TURKISH","customportals_text_3"]="\${pending_of_translation} Seçilen dizinde esir portal bulunamadı"
+	arr["ARABIC","customportals_text_3"]="\${pending_of_translation} لم توجد بوابات أسير في الدليل المختار"
+	arr["CHINESE","customportals_text_3"]="\${pending_of_translation} 在选定目录中没有发现圈养门户"
 
-	arr["ENGLISH","customportals_text_4"]="Enter the number of the captive portal you want to select: "
-	arr["SPANISH","customportals_text_4"]="Ingrese el número del portal que desea seleccionar: "
-	arr["FRENCH","customportals_text_4"]="Entrez le numéro du portail que vous souhaitez sélectionner : "
-	arr["CATALAN","customportals_text_4"]="Introduïu el número del portal que voleu seleccionar: "
-	arr["PORTUGUESE","customportals_text_4"]="Digite o número do portal que deseja selecionar: "
-	arr["RUSSIAN","customportals_text_4"]="Введите номер портала, который хотите выбрать: "
-	arr["GREEK","customportals_text_4"]="Εισαγάγετε τον αριθμό της πύλης που θέλετε να επιλέξετε: "
-	arr["ITALIAN","customportals_text_4"]="Inserisci il numero del portale che desideri selezionare: "
-	arr["POLISH","customportals_text_4"]="Wprowadź numer portalu, który chcesz wybrać: "
-	arr["GERMAN","customportals_text_4"]="Geben Sie die Nummer des Portals ein, das Sie auswählen möchten: "
-	arr["TURKISH","customportals_text_4"]="Seçmek istediğiniz portalın numarasını girin: "
-	arr["ARABIC","customportals_text_4"]="أدخل رقم البوابة التي تريد تحديدها: "
-	arr["CHINESE","customportals_text_4"]="输入您要选择的门户编号："
+	arr["ENGLISH","customportals_text_4"]="Enter the number of the captive portal you want to select:"
+	arr["SPANISH","customportals_text_4"]="Ingrese el número del portal cautivo que desea seleccionar:"
+	arr["FRENCH","customportals_text_4"]="\${pending_of_translation} Entrez le numéro du portail captif que vous souhaitez sélectionner:"
+	arr["CATALAN","customportals_text_4"]="\${pending_of_translation} Introduïu el número del portal en captivitat que voleu seleccionar:"
+	arr["PORTUGUESE","customportals_text_4"]="\${pending_of_translation} Digite o número do portal cativo que você deseja selecionar:"
+	arr["RUSSIAN","customportals_text_4"]="\${pending_of_translation} Введите номер портала в неволе, который вы хотите выбрать:"
+	arr["GREEK","customportals_text_4"]="\${pending_of_translation} Εισαγάγετε τον αριθμό της πύλης Captive που θέλετε να επιλέξετε:"
+	arr["ITALIAN","customportals_text_4"]="\${pending_of_translation} Immettere il numero del portale in cattività che si desidera selezionare:"
+	arr["POLISH","customportals_text_4"]="\${pending_of_translation} Wprowadź numer portalu w niewoli, który chcesz wybrać:"
+	arr["GERMAN","customportals_text_4"]="\${pending_of_translation} Geben Sie die Nummer des Captive -Portals ein, das Sie auswählen möchten:"
+	arr["TURKISH","customportals_text_4"]="\${pending_of_translation} Seçmek istediğiniz esir portalı sayısını girin:"
+	arr["ARABIC","customportals_text_4"]="\${pending_of_translation} أدخل رقم البوابة الأسيرة التي تريد تحديدها:"
+	arr["CHINESE","customportals_text_4"]="\${pending_of_translation} 输入您要选择的圈养门户的编号："
 
-	arr["ENGLISH","customportals_text_5"]="You selected the captive portal: \${customportals_selected_portal}"
-	arr["SPANISH","customportals_text_5"]="Seleccionaste el portal: \${customportals_selected_portal}"
-	arr["FRENCH","customportals_text_5"]="Vous avez sélectionné le portail : \${customportals_selected_portal}"
-	arr["CATALAN","customportals_text_5"]="Heu seleccionat el portal: \${customportals_selected_portal}"
-	arr["PORTUGUESE","customportals_text_5"]="Você selecionou o portal: \${customportals_selected_portal}"
-	arr["RUSSIAN","customportals_text_5"]="Вы выбрали портал: \${customportals_selected_portal}"
-	arr["GREEK","customportals_text_5"]="Επιλέξατε την πύλη: \${customportals_selected_portal}"
-	arr["ITALIAN","customportals_text_5"]="Hai selezionato il portale: \${customportals_selected_portal}"
-	arr["POLISH","customportals_text_5"]="Wybrałeś portal: \${customportals_selected_portal}"
-	arr["GERMAN","customportals_text_5"]="Sie haben das Portal ausgewählt: \${customportals_selected_portal}"
-	arr["TURKISH","customportals_text_5"]="Seçtiğiniz portal: \${customportals_selected_portal}"
-	arr["ARABIC","customportals_text_5"]="لقد اخترت البوابة: \${customportals_selected_portal}"
-	arr["CHINESE","customportals_text_5"]="您选择了门户：\${customportals_selected_portal}"
+	arr["ENGLISH","customportals_text_5"]="You selected the captive portal: \${normal_color}\${customportals_selected_portal}"
+	arr["SPANISH","customportals_text_5"]="Seleccionaste el portal cautivo: \${normal_color}\${customportals_selected_portal}"
+	arr["FRENCH","customportals_text_5"]="\${pending_of_translation} Vous avez sélectionné le portail captif: \${normal_color}\${customportals_selected_portal}"
+	arr["CATALAN","customportals_text_5"]="\${pending_of_translation} Heu seleccionat el portal captiu: \${normal_color}\${customportals_selected_portal}"
+	arr["PORTUGUESE","customportals_text_5"]="\${pending_of_translation} Você selecionou o portal cativo: \${normal_color}\${customportals_selected_portal}"
+	arr["RUSSIAN","customportals_text_5"]="\${pending_of_translation} Вы выбрали портал «Споты»: \${normal_color}\${customportals_selected_portal}"
+	arr["GREEK","customportals_text_5"]="\${pending_of_translation} Επιλέξατε την πύλη αιχμαλώτων: \${normal_color}\${customportals_selected_portal}"
+	arr["ITALIAN","customportals_text_5"]="\${pending_of_translation} Hai selezionato il portale in cattività: \${normal_color}\${customportals_selected_portal}"
+	arr["POLISH","customportals_text_5"]="\${pending_of_translation} Wybrałeś portal w niewoli: \${normal_color}\${customportals_selected_portal}"
+	arr["GERMAN","customportals_text_5"]="\${pending_of_translation} Sie haben das Captive Portal ausgewählt: \${normal_color}\${customportals_selected_portal}"
+	arr["TURKISH","customportals_text_5"]="\${pending_of_translation} Esir portalı seçtiniz: \${normal_color}\${customportals_selected_portal}"
+	arr["ARABIC","customportals_text_5"]="\${pending_of_translation} \${normal_color}\${customportals_selected_portal} \${green_color}:لقد حددت البوابة الأسير"
+	arr["CHINESE","customportals_text_5"]="\${pending_of_translation} 您选择了圈养门户：\${normal_color}\${customportals_selected_portal}"
 
-	arr["ENGLISH","customportals_text_6"]="Invalid selection. Going back..."
+	arr["ENGLISH","customportals_text_6"]="Invalid selection. Returning..."
 	arr["SPANISH","customportals_text_6"]="Selección inválida. Regresando..."
-	arr["FRENCH","customportals_text_6"]="Sélection invalide. Retour..."
-	arr["CATALAN","customportals_text_6"]="Selecció no vàlida. Tornant..."
-	arr["PORTUGUESE","customportals_text_6"]="Seleção inválida. Voltando..."
-	arr["RUSSIAN","customportals_text_6"]="Неверный выбор. Возврат..."
-	arr["GREEK","customportals_text_6"]="Μη έγκυρη επιλογή. Επιστροφή..."
-	arr["ITALIAN","customportals_text_6"]="Selezione non valida. Tornando indietro..."
-	arr["POLISH","customportals_text_6"]="Nieprawidłowy wybór. Powrót..."
-	arr["GERMAN","customportals_text_6"]="Ungültige Auswahl. Zurück..."
-	arr["TURKISH","customportals_text_6"]="Geçersiz seçim. Geri dönülüyor..."
-	arr["ARABIC","customportals_text_6"]="اختيار غير صالح. العودة..."
-	arr["CHINESE","customportals_text_6"]="无效选择。返回..."
+	arr["FRENCH","customportals_text_6"]="\${pending_of_translation} Sélection invalide. Retour..."
+	arr["CATALAN","customportals_text_6"]="\${pending_of_translation} Selecció no vàlida. Tornant..."
+	arr["PORTUGUESE","customportals_text_6"]="\${pending_of_translation} Seleção inválida. Voltando..."
+	arr["RUSSIAN","customportals_text_6"]="\${pending_of_translation} Неверный выбор. Возврат..."
+	arr["GREEK","customportals_text_6"]="\${pending_of_translation} Μη έγκυρη επιλογή. Επιστροφή..."
+	arr["ITALIAN","customportals_text_6"]="\${pending_of_translation} Selezione non valida. Tornando indietro..."
+	arr["POLISH","customportals_text_6"]="\${pending_of_translation} Nieprawidłowy wybór. Powrót..."
+	arr["GERMAN","customportals_text_6"]="\${pending_of_translation} Ungültige Auswahl. Zurück..."
+	arr["TURKISH","customportals_text_6"]="\${pending_of_translation} Geçersiz seçim. Geri dönülüyor..."
+	arr["ARABIC","customportals_text_6"]="\${pending_of_translation} اختيار غير صالح. العودة..."
+	arr["CHINESE","customportals_text_6"]="\${pending_of_translation} 无效选择。返回..."
 }
 
-initialize_customportals_language_strings
 customportals_set_path
