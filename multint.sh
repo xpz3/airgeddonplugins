@@ -98,6 +98,15 @@ function multint_override_select_interface() {
 						multint_deauth_interface="${item2}"
 						current_iface_on_messages="${multint_deauth_interface}"
 						interface=${item2}
+
+						if [ "${multint_ap_interface}" = "${multint_deauth_interface}" ]; then
+							echo
+							language_strings "${language}" "multint_text_3" "red"
+							language_strings "${language}" 115 "read"
+							multintcounter=$((multintcounter - 1))
+							break
+						fi
+
 						phy_interface=$(physical_interface_finder "${interface}")
 						interface_mac=$(ip link show "${interface}" | awk '/ether/ {print $2}')
 						if [ -n "${phy_interface}" ]; then
@@ -454,4 +463,18 @@ function multint_prehook_hookable_for_languages() {
 	arr["TURKISH","multint_text_2"]="\${pending_of_translation} Deauth için bir arayüz seçin (Monitor Mode):"
 	arr["ARABIC","multint_text_2"]="\${pending_of_translation} حدد واجهة لـ Deauth (Monitor Mode):"
 	arr["CHINESE","multint_text_2"]="\${pending_of_translation} 选择Deauth（Monitor Mode）的接口："
+
+	arr["ENGLISH","multint_text_3"]="You can't select the same interface twice"
+	arr["SPANISH","multint_text_3"]="No puedes seleccionar la misma interfaz dos veces"
+	arr["FRENCH","multint_text_3"]="\${pending_of_translation} Vous ne pouvez pas sélectionner la même interface deux fois"
+	arr["CATALAN","multint_text_3"]="\${pending_of_translation} No podeu seleccionar la mateixa interfície dues vegades"
+	arr["PORTUGUESE","multint_text_3"]="\${pending_of_translation} Você não pode selecionar a mesma interface duas vezes"
+	arr["RUSSIAN","multint_text_3"]="\${pending_of_translation} Вы не можете выбрать один и тот же интерфейс дважды"
+	arr["GREEK","multint_text_3"]="\${pending_of_translation} Δεν μπορείτε να επιλέξετε την ίδια διεπαφή δύο φορές"
+	arr["ITALIAN","multint_text_3"]="\${pending_of_translation} Non è possibile selezionare la stessa interfaccia due volte"
+	arr["POLISH","multint_text_3"]="\${pending_of_translation} Nie możesz dwa razy wybrać tego samego interfejsu"
+	arr["GERMAN","multint_text_3"]="\${pending_of_translation} Sie können dieselbe Schnittstelle nicht zweimal auswählen"
+	arr["TURKISH","multint_text_3"]="\${pending_of_translation} Aynı arayüzü iki kez seçemezsiniz"
+	arr["ARABIC","multint_text_3"]="\${pending_of_translation} لا يمكنك تحديد الواجهة نفسها مرتين"
+	arr["CHINESE","multint_text_3"]="\${pending_of_translation} 您不能两次选择相同的界面"
 }
