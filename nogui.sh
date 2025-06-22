@@ -15,7 +15,7 @@ plugin_enabled=1
 ###### PLUGIN REQUIREMENTS ######
 
 #Set airgeddon versions to apply this plugin (leave blank to set no limits, minimum version recommended is 10.0 on which plugins feature was added)
-plugin_minimum_ag_affected_version="11.31"
+plugin_minimum_ag_affected_version="11.50"
 plugin_maximum_ag_affected_version=""
 
 #Set only one element in the array "*" to affect all distros, otherwise add them one by one with the name which airgeddon uses for that distro (examples "BlackArch", "Parrot", "Kali")
@@ -936,9 +936,8 @@ function nogui_override_check_compatibility() {
 	fi
 }
 
-function initialize_nogui_language_strings() {
-
-	debug_print
+#Prehook for hookable_for_languages function to modify language strings
+function nogui_prehook_hookable_for_languages() {
 
 	arr["ENGLISH",nogui_text_1]="The attack is going to start. Press Ctrl+C to stop the attack and return to menu. Press Enter to continue..."
 	arr["SPANISH",nogui_text_1]="El ataque va a comenzar. Pulsa Ctrl+C para parar el ataque y volver al menú. Pulsa Enter para continuar..."
@@ -968,5 +967,3 @@ function initialize_nogui_language_strings() {
 	arr["ARABIC",nogui_text_2]="\${pending_of_translation} ...اضغط على Ctrl+C للعودة إلى القائمة"
 	arr["CHINESE",nogui_text_2]="按 Ctrl+C 返回菜单..."
 }
-
-initialize_nogui_language_strings
