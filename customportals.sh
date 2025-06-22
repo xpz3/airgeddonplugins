@@ -30,6 +30,7 @@ customportals_jsonresponseenable=true #Should be false for Technicolor_en.portal
 customportals_possible_password_fields="password|password1|passphrase|key|key1|wpa|wpa_psw" #The password field should match any of these
 customportals_php_handle=1 #This must be set to 1 for included portals to work. Set to 0 if you want to use your own custom portals that uses php
 
+#shellcheck disable=SC2164
 function customportals_get_absolute_script_path() {
 
 	debug_print
@@ -687,6 +688,7 @@ function customportals_override_set_captive_portal_language() {
 	return 0
 }
 
+#shellcheck disable=SC2010
 function customportals_set_path() {
 
 	debug_print
@@ -969,7 +971,6 @@ function customportals_override_et_prerequisites() {
 }
 
 #Prehook for hookable_for_languages function to modify language strings
-#shellcheck disable=SC1111
 function customportals_prehook_hookable_for_languages() {
 
 	arr["ENGLISH","customportals_text_1"]="Do you want to choose a custom portal? \${normal_color}\${visual_choice}"

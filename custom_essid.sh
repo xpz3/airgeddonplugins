@@ -15,6 +15,7 @@ plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
 
+#shellcheck disable=SC2162
 function custom_essid_prehook_set_hostapd_config() {
 
 	debug_print
@@ -26,7 +27,6 @@ function custom_essid_prehook_set_hostapd_config() {
 }
 
 #Prehook for hookable_for_languages function to modify language strings
-#shellcheck disable=SC1111
 function custom_essid_prehook_hookable_for_languages() {
 
 	arr["ENGLISH","custom_essid_text_1"]="A hidden network has been chosen for Evil Twin attack. Please specify the ESSID of the target AP to continue"

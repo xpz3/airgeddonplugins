@@ -473,6 +473,7 @@ function mass_handshake_capture_dos_handshake_menu() {
 	esac
 }
 
+#shellcheck disable=SC2164
 function mass_handshake_capture_get_absolute_script_path() {
 
 	debug_print
@@ -487,6 +488,7 @@ function mass_handshake_capture_get_absolute_script_path() {
 	fi
 }
 
+#shellcheck disable=SC2010
 function mass_handshake_capture() {
 
 	debug_print
@@ -577,8 +579,8 @@ function mass_handshake_capture_grab_wpa_targets() {
 	wait_for_process "airodump-ng -w ${tmpdir}nws${cypher_cmd}${interface} --band ${airodump_band_modifier}" "Exploring for targets"
 	targetline=$(awk '/(^Station[s]?|^Client[es]?)/{print NR}' "${tmpdir}nws-01.csv" 2> /dev/null)
 	targetline=$((targetline - 1))
-	head -n "${targetline}" "${tmpdir}nws-01.csv" 2> /dev/null &> "${tmpdir}nws.csv"
-	tail -n +"${targetline}" "${tmpdir}nws-01.csv" 2> /dev/null &> "${tmpdir}clts.csv"
+	head -n "${targetline}" "${tmpdir}nws-01.csv" &> "${tmpdir}nws.csv"
+	tail -n +"${targetline}" "${tmpdir}nws-01.csv" &> "${tmpdir}clts.csv"
 
 	csvline=$(wc -l "${tmpdir}nws.csv" 2> /dev/null | awk '{print $1}')
 	if [ "${csvline}" -le 3 ]; then

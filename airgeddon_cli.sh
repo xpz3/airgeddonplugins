@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #Global shellcheck disabled warnings
-#shellcheck disable=SC2034,SC2154
+#shellcheck disable=SC2034,SC2154,SC2124,SC2010,SC2027
 
 plugin_name="Airgeddon CLI"
 plugin_description="Plugin to use cli parameters to skip menu and start evil twin attack."
@@ -56,6 +56,7 @@ function airgeddon_cli_print_usage() {
 	echo $'\t[-u|-usage|--usage]\n\t\tPrints usage'
 }
 
+#shellcheck disable=SC2164
 function airgeddon_cli_get_absolute_script_path() {
 
 	debug_print
@@ -151,7 +152,8 @@ function airgeddon_cli_verify_parameters() {
 		echo "No interface selected. Quitting..."
 		exit
 	else
-		local airgeddon_cli_interface_mode=$(iw "${interface}" info 2> /dev/null | grep type | awk '{print $2}')
+		local airgeddon_cli_interface_mode
+		airgeddon_cli_interface_mode=$(iw "${interface}" info 2> /dev/null | grep type | awk '{print $2}')
 		if [[ "${airgeddon_cli_interface_mode^}" != "Managed" ]];then
 			echo "The selected interface MUST be in Managed mode. Quitting..."
 			exit

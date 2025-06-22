@@ -151,6 +151,7 @@ function nogui_override_manage_output() {
 	fi
 }
 
+#shellcheck disable=SC2162,SC2094
 function nogui_override_exec_et_captive_portal_attack() {
 
 	debug_print
@@ -272,7 +273,7 @@ function nogui_override_capture_traps() {
 				if [ "${no_hardcore_exit}" -eq 0 ]; then
 					hardcore_exit
 				else
-					exit ${exit_code}
+					exit "${exit_code}"
 				fi
 			;;
 		esac
@@ -729,7 +730,7 @@ function nogui_override_capture_handshake_evil_twin() {
 	ask_timeout "capture_handshake"
 	sleeptimeattack=10
 
-	case ${et_dos_attack} in
+	case "${et_dos_attack}" in
 		"${mdk_command}")
 			rm -rf "${tmpdir}bl.txt" > /dev/null 2>&1
 			echo "${bssid}" > "${tmpdir}bl.txt"
@@ -794,6 +795,7 @@ function nogui_override_capture_handshake_window() {
 	manage_output "+j -sb -rightbar -geometry ${g1_topright_window} -T \"Capturing Handshake\"" "timeout --foreground -s SIGTERM ${timeout_capture_handshake} airodump-ng -c ${channel} -d ${bssid} -w ${tmpdir}handshake ${interface}" "Capturing Handshake" "active"
 }
 
+#shellcheck disable=SC2004
 function nogui_override_check_compatibility() {
 
 	debug_print
@@ -852,7 +854,7 @@ function nogui_override_check_compatibility() {
 		else
 			if [ "${i}" = "beef" ]; then
 				detect_fake_beef
-				if [ ${fake_beef_found} -eq 1 ]; then
+				if [ "${fake_beef_found}" -eq 1 ]; then
 					if ! "${AIRGEDDON_SILENT_CHECKS:-false}"; then
 						echo -ne "${red_color} Error${normal_color}"
 						echo -ne " (${possible_package_names_text[${language}]} : ${possible_package_names[${i}]})"
@@ -917,11 +919,11 @@ function nogui_override_check_compatibility() {
 	compatible=1
 
 	if ! "${AIRGEDDON_SILENT_CHECKS:-false}"; then
-		if [ ${optional_toolsok} -eq 0 ]; then
+		if [ "${optional_toolsok}" -eq 0 ]; then
 			echo
 			language_strings "${language}" 219 "yellow"
 
-			if [ ${fake_beef_found} -eq 1 ]; then
+			if [ "${fake_beef_found}" -eq 1 ]; then
 				echo
 				language_strings "${language}" 401 "red"
 				echo
