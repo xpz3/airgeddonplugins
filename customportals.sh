@@ -10,7 +10,7 @@ plugin_author="xpz3"
 #Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="11.50"
+plugin_minimum_ag_affected_version="11.60"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -26,25 +26,9 @@ customportals_finalhtml="final.html" #Do not change
 customportals_jsonresponseenable=true #Should be false for Technicolor_en.portal and ARRIS_en.portal. Will be changed automatically
 
 #User defined variables
+customportals_possible_password_fields="password|password1|passphrase|key|key1|wpa|wpa_psw" #The password field of the portal html template must match any of these
 
-customportals_possible_password_fields="password|password1|passphrase|key|key1|wpa|wpa_psw" #The password field should match any of these
-customportals_php_handle=1 #This must be set to 1 for included portals to work. Set to 0 if you want to use your own custom portals that uses php
-
-#shellcheck disable=SC2164
-function customportals_get_absolute_script_path() {
-
-	debug_print
-
-	if [ "${0}" != "${scriptname}" ];then
-		customportals_relative_path=$(pwd)
-		cd "${customportals_relative_path}"
-		cd "${0%/*}"
-		customportals_absolute_script_path=$(pwd)
-	else
-		customportals_absolute_script_path=$(pwd)
-	fi
-}
-
+#Custom function. Create update php file
 function customportals_create_updatephpfile() {
 
 	debug_print
@@ -100,6 +84,7 @@ function customportals_create_updatephpfile() {
 
 }
 
+#Custom function. Create check php file
 function customportals_create_checkphpfile() {
 
 	debug_print
@@ -157,22 +142,24 @@ function customportals_create_checkphpfile() {
 		exec 4>&-
 }
 
+#Custom function. Create post handler file
 function customportals_create_post_handler_files() {
 
 	debug_print
 
 	customportals_create_updatephpfile
 	customportals_create_checkphpfile
-	if [[ -f "${tmpdir}${webdir}${customportals_errorhtml}" ]]; then
+	if [ -f "${tmpdir}${webdir}${customportals_errorhtml}" ]; then
 		awk '{gsub(/onclick="history\.back\(\);return false"/, "onclick=\"parent.location.href = '\''index.htm'\'';return false\"")}1' "${tmpdir}${webdir}${customportals_errorhtml}" > "${tmpdir}${webdir}"temp.html && mv "${tmpdir}${webdir}"temp.html "${tmpdir}${webdir}${customportals_errorhtml}"
 	fi
 }
 
+#Custom function. Prepare custom portal
 function customportals_prepare_custom_portal() {
 
 	debug_print
 
-	customportals_portal_directory="${customportals_absolute_script_path}"plugins/customportals/
+	customportals_portal_directory="${scriptfolder}${plugins_dir}customportals/"
 
 	cp -r "${customportals_portal_directory}${customportals_selected_portal}"/* "${tmpdir}${webdir}"
 
@@ -183,52 +170,7 @@ function customportals_prepare_custom_portal() {
 	customportals_create_post_handler_files
 }
 
-function customportals_override_set_webserver_config() {
-
-	debug_print
-
-	rm -rf "${tmpdir}${webserver_file}" > /dev/null 2>&1
-	rm -rf "${tmpdir}${webserver_log}" > /dev/null 2>&1
-
-	{
-	echo -e "server.document-root = \"${tmpdir}${webdir}\"\n"
-	echo -e "server.modules = ("
-	echo -e "\"mod_auth\","
-	echo -e "\"mod_cgi\","
-	echo -e "\"mod_redirect\","
-	echo -e "\"mod_accesslog\""
-	echo -e ")\n"
-	echo -e "\$HTTP[\"host\"] =~ \"(.*)\" {"
-	echo -e "url.redirect = ( \"^/index.htm$\" => \"/\")"
-	echo -e "url.redirect-code = 302"
-	echo -e "}"
-	echo -e "server.bind = \"${et_ip_router}\""
-	echo -e "server.port = ${www_port}\n"
-	echo -e "index-file.names = (\"${indexfile}\")"
-	echo -e "server.error-handler-404 = \"/\"\n"
-	echo -e "mimetype.assign = ("
-	echo -e "\".css\" => \"text/css\","
-	echo -e "\".html\" => \"text/html\","
-	echo -e "\".js\" => \"text/javascript\""
-	echo -e ")\n"
-	echo -e "cgi.assign = (\".htm\" => \"/bin/bash\""
-	} >> "${tmpdir}${webserver_file}"
-
-	if [ "${customportals_php_handle}" -eq 1 ]; then
-		echo -e ",\".php\" => \"/bin/bash\"" >> "${tmpdir}${webserver_file}"
-	fi
-
-	{
-	echo -e ")\n"
-	echo -e "accesslog.filename = \"${tmpdir}${webserver_log}\""
-	echo -e "accesslog.escaping = \"default\""
-	echo -e "accesslog.format = \"%h %s %r %v%U %t '%{User-Agent}i'\""
-	echo -e "\$HTTP[\"remote-ip\"] == \"${loopback_ip}\" { accesslog.filename = \"\" }"
-	} >> "${tmpdir}${webserver_file}"
-
-	sleep 2
-}
-
+#Override set_captive_portal_page function to modify portal page content
 function customportals_override_set_captive_portal_page() {
 
 	debug_print
@@ -538,6 +480,7 @@ function customportals_override_set_captive_portal_page() {
 	fi
 }
 
+#Override set_captive_portal_language function to avoid language menu if custom portals are used
 function customportals_override_set_captive_portal_language() {
 
 	debug_print
@@ -688,18 +631,7 @@ function customportals_override_set_captive_portal_language() {
 	return 0
 }
 
-#shellcheck disable=SC2010
-function customportals_set_path() {
-
-	debug_print
-
-	if [[ $(ls "${scriptfolder}" | grep "${scriptname}") == "" ]];then
-		customportals_get_absolute_script_path
-	else
-		customportals_absolute_script_path="${scriptfolder}"
-	fi
-}
-
+#Override et_prerequisites function to
 function customportals_override_et_prerequisites() {
 
 	debug_print
@@ -987,19 +919,19 @@ function customportals_prehook_hookable_for_languages() {
 	arr["ARABIC","customportals_text_1"]="\${pending_of_translation} \${normal_color}\${visual_choice}\${green_color} هل تريد اختيار بوابة مخصصة؟\${normal_color}"
 	arr["CHINESE","customportals_text_1"]="\${pending_of_translation} 您想选择自定义门户吗？ \${normal_color}\${visual_choice}"
 
-	arr["ENGLISH","customportals_text_2"]="Please choose from the following available portals"
-	arr["SPANISH","customportals_text_2"]="Elige entre los siguientes portales disponibles"
-	arr["FRENCH","customportals_text_2"]="\${pending_of_translation} Veuillez choisir parmi les portails disponibles suivants"
-	arr["CATALAN","customportals_text_2"]="\${pending_of_translation} Trieu entre els portals disponibles següents"
-	arr["PORTUGUESE","customportals_text_2"]="\${pending_of_translation} Escolha entre os seguintes portais disponíveis"
-	arr["RUSSIAN","customportals_text_2"]="\${pending_of_translation} Пожалуйста, выберите из следующих доступных порталов"
-	arr["GREEK","customportals_text_2"]="\${pending_of_translation} Επιλέξτε από τις παρακάτω διαθέσιμες πύλες"
-	arr["ITALIAN","customportals_text_2"]="\${pending_of_translation} Scegli tra i seguenti portali disponibili"
-	arr["POLISH","customportals_text_2"]="\${pending_of_translation} Wybierz z następujących dostępnych portali"
-	arr["GERMAN","customportals_text_2"]="\${pending_of_translation} Bitte wählen Sie aus den folgenden verfügbaren Portalen"
-	arr["TURKISH","customportals_text_2"]="\${pending_of_translation} Lütfen aşağıdaki mevcut portallardan seçim yapın"
-	arr["ARABIC","customportals_text_2"]="\${pending_of_translation} الرجاء الاختيار من بين البوابات المتاحة التالية"
-	arr["CHINESE","customportals_text_2"]="\${pending_of_translation} 请从以下可用门户中选择"
+	arr["ENGLISH","customportals_text_2"]="Please choose from the following available portals:"
+	arr["SPANISH","customportals_text_2"]="Elige entre los siguientes portales disponibles:"
+	arr["FRENCH","customportals_text_2"]="\${pending_of_translation} Veuillez choisir parmi les portails disponibles suivants:"
+	arr["CATALAN","customportals_text_2"]="\${pending_of_translation} Trieu entre els portals disponibles següents:"
+	arr["PORTUGUESE","customportals_text_2"]="\${pending_of_translation} Escolha entre os seguintes portais disponíveis:"
+	arr["RUSSIAN","customportals_text_2"]="\${pending_of_translation} Пожалуйста, выберите из следующих доступных порталов:"
+	arr["GREEK","customportals_text_2"]="\${pending_of_translation} Επιλέξτε από τις παρακάτω διαθέσιμες πύλες:"
+	arr["ITALIAN","customportals_text_2"]="\${pending_of_translation} Scegli tra i seguenti portali disponibili:"
+	arr["POLISH","customportals_text_2"]="\${pending_of_translation} Wybierz z następujących dostępnych portali:"
+	arr["GERMAN","customportals_text_2"]="\${pending_of_translation} Bitte wählen Sie aus den folgenden verfügbaren Portalen:"
+	arr["TURKISH","customportals_text_2"]="\${pending_of_translation} Lütfen aşağıdaki mevcut portallardan seçim yapın:"
+	arr["ARABIC","customportals_text_2"]="\${pending_of_translation} :الرجاء الاختيار من بين البوابات المتاحة التالية"
+	arr["CHINESE","customportals_text_2"]="\${pending_of_translation} 请从以下可用门户中选择:"
 
 	arr["ENGLISH","customportals_text_3"]="No captive portals found in the chosen directory"
 	arr["SPANISH","customportals_text_3"]="No se encuentran portales cautivos en el directorio elegido"
@@ -1044,7 +976,7 @@ function customportals_prehook_hookable_for_languages() {
 	arr["CHINESE","customportals_text_5"]="\${pending_of_translation} 您选择了圈养门户：\${normal_color}\${customportals_selected_portal}"
 
 	arr["ENGLISH","customportals_text_6"]="Invalid selection. Returning..."
-	arr["SPANISH","customportals_text_6"]="Selección inválida. Regresando..."
+	arr["SPANISH","customportals_text_6"]="Selección no válida. Volviendo..."
 	arr["FRENCH","customportals_text_6"]="\${pending_of_translation} Sélection invalide. Retour..."
 	arr["CATALAN","customportals_text_6"]="\${pending_of_translation} Selecció no vàlida. Tornant..."
 	arr["PORTUGUESE","customportals_text_6"]="\${pending_of_translation} Seleção inválida. Voltando..."
@@ -1057,5 +989,3 @@ function customportals_prehook_hookable_for_languages() {
 	arr["ARABIC","customportals_text_6"]="\${pending_of_translation} اختيار غير صالح. العودة..."
 	arr["CHINESE","customportals_text_6"]="\${pending_of_translation} 无效选择。返回..."
 }
-
-customportals_set_path
