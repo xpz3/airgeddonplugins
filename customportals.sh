@@ -546,7 +546,6 @@ function customportals_override_set_captive_portal_language() {
 	print_iface_selected
 	print_et_target_vars
 	print_iface_internet_selected
-	captive_portal_language="ENGLISH"
 
 	ask_yesno "customportals_text_1" "no"
 	if [ "${yesno}" = "y" ]; then
