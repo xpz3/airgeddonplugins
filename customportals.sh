@@ -309,7 +309,7 @@ function customportals_override_set_captive_portal_page() {
 		echo -e "\tif (document.readyState !== 'loading') onLoad(); else document.addEventListener('DOMContentLoaded', onLoad);"
 		echo -e "})();\n"
 		echo -e "function redirect() {"
-		echo -e "\tdocument.location = \"${indexfile}\";"
+		echo -e "\ttop.location.href = \"${indexfile}\";"
 		echo -e "}\n"
 		echo -e "function redirecterror() {"
 		echo -e "\tdocument.location = \"${customportals_errorhtml}\";"
@@ -318,7 +318,7 @@ function customportals_override_set_captive_portal_page() {
 		echo -e "\tdocument.location = \"${customportals_finalhtml}\";"
 		echo -e "}\n"
 		} >> "${tmpdir}${webdir}${jsfile}"
-		
+
 		{
 		echo -e "#!/usr/bin/env bash"
 		echo -e "echo 'Content-Type: text/html'"
