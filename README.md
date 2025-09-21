@@ -14,6 +14,9 @@
     <li><strong>autoload_handshake.sh</strong> This plugin automatically loads a previously captured handshake file for a selected target, if the user wishes to. You can change the default handshake location by editing the variable in the file.</li>
 </ul>
 
+```diff
+- customportals.sh - From airgeddon version 11.60, if you want to use real php webpages, you have to modify airgeddon directly or hook a function to change the lighttpd config file that airgeddon uses and remove the cgi.assign php to bash. -
+```
 <strong>Usage</strong>
 <br>
 Just download and copy the plugin file to the plugins folder inside airgeddon directory. Please do not rename any plugin file. After copying the file, just run airgeddon as you normally would and the plugin will do its job.
