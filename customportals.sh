@@ -27,6 +27,7 @@ customportals_jsonresponseenable=true #Should be false for Technicolor_en.portal
 
 #User defined variables
 customportals_possible_password_fields="password|password1|passphrase|key|key1|wpa|wpa_psw" #The password field of the portal html template must match any of these
+#customportals_php_as_cgi=0 #Uncomment this line if your portal template is using PHP as real PHP and not CGI
 
 #Custom function. Create update php file
 function customportals_create_updatephpfile() {
