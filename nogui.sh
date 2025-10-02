@@ -15,7 +15,7 @@ plugin_enabled=1
 ###### PLUGIN REQUIREMENTS ######
 
 #Set airgeddon versions to apply this plugin (leave blank to set no limits, minimum version recommended is 10.0 on which plugins feature was added)
-plugin_minimum_ag_affected_version="11.50"
+plugin_minimum_ag_affected_version="11.60"
 plugin_maximum_ag_affected_version=""
 
 #Set only one element in the array "*" to affect all distros, otherwise add them one by one with the name which airgeddon uses for that distro (examples "BlackArch", "Parrot", "Kali")
@@ -114,7 +114,7 @@ function nogui_override_manage_output() {
 			eval "${nogui_command_line}"
 			no_pid=0
 		;;
-		"${mdk_command} amok attack" | "aireplay deauth attack" | "wids / wips / wds confusion attack")
+		"${mdk_command} amok attack" | "aireplay deauth attack" | "auth dos attack")
 			nogui_windows_start=1
 			nogui_skip_trap=1
 			eval "${nogui_command_line}${command_tail}"
@@ -727,24 +727,26 @@ function nogui_override_capture_handshake_evil_twin() {
 		return 1
 	fi
 
-	ask_timeout "capture_handshake"
+	ask_timeout "capture_handshake_decloak"
 	sleeptimeattack=10
 
 	case "${et_dos_attack}" in
 		"${mdk_command}")
 			rm -rf "${tmpdir}bl.txt" > /dev/null 2>&1
 			echo "${bssid}" > "${tmpdir}bl.txt"
+			iw dev "${interface}" set channel "${channel}" > /dev/null 2>&1
 			recalculate_windows_sizes
 			manage_output "+j -bg \"#000000\" -fg \"#FF0000\" -geometry ${g1_bottomleft_window} -T \"${mdk_command} amok attack\"" "timeout -s SIGTERM ${sleeptimeattack} ${mdk_command} ${interface} d -b ${tmpdir}bl.txt -c ${channel}" "${mdk_command} amok attack"
 		;;
 		"Aireplay")
-			${airmon} start "${interface}" "${channel}" > /dev/null 2>&1
+			iw dev "${interface}" set channel "${channel}" > /dev/null 2>&1
 			recalculate_windows_sizes
 			manage_output "+j -bg \"#000000\" -fg \"#FF0000\" -geometry ${g1_bottomleft_window} -T \"aireplay deauth attack\"" "timeout -s SIGTERM ${sleeptimeattack} aireplay-ng --deauth 0 -a ${bssid} --ignore-negative-one ${interface}" "aireplay deauth attack"
 		;;
-		"Wds Confusion")
+		"Auth DoS")
+			iw dev "${interface}" set channel "${channel}" > /dev/null 2>&1
 			recalculate_windows_sizes
-			manage_output "+j -bg \"#000000\" -fg \"#FF0000\" -geometry ${g1_bottomleft_window} -T \"wids / wips / wds confusion attack\"" "timeout -s SIGTERM ${sleeptimeattack} ${mdk_command} ${interface} w -e ${essid} -c ${channel}" "wids / wips / wds confusion attack"
+			manage_output "+j -bg \"#000000\" -fg \"#FF0000\" -geometry ${g1_bottomleft_window} -T \"auth dos attack\"" "timeout -s SIGTERM ${sleeptimeattack} ${mdk_command} ${interface} a -a ${bssid} -m" "auth dos attack"
 		;;
 	esac
 	processidattack=$!
