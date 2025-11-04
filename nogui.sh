@@ -15,7 +15,7 @@ plugin_enabled=1
 ###### PLUGIN REQUIREMENTS ######
 
 #Set airgeddon versions to apply this plugin (leave blank to set no limits, minimum version recommended is 10.0 on which plugins feature was added)
-plugin_minimum_ag_affected_version="11.31"
+plugin_minimum_ag_affected_version="11.60"
 plugin_maximum_ag_affected_version=""
 
 #Set only one element in the array "*" to affect all distros, otherwise add them one by one with the name which airgeddon uses for that distro (examples "BlackArch", "Parrot", "Kali")
@@ -114,7 +114,7 @@ function nogui_override_manage_output() {
 			eval "${nogui_command_line}"
 			no_pid=0
 		;;
-		"${mdk_command} amok attack" | "aireplay deauth attack" | "wids / wips / wds confusion attack")
+		"${mdk_command} amok attack" | "aireplay deauth attack" | "auth dos attack")
 			nogui_windows_start=1
 			nogui_skip_trap=1
 			eval "${nogui_command_line}${command_tail}"
@@ -151,6 +151,7 @@ function nogui_override_manage_output() {
 	fi
 }
 
+#shellcheck disable=SC2162,SC2094
 function nogui_override_exec_et_captive_portal_attack() {
 
 	debug_print
@@ -272,7 +273,7 @@ function nogui_override_capture_traps() {
 				if [ "${no_hardcore_exit}" -eq 0 ]; then
 					hardcore_exit
 				else
-					exit ${exit_code}
+					exit "${exit_code}"
 				fi
 			;;
 		esac
@@ -726,24 +727,26 @@ function nogui_override_capture_handshake_evil_twin() {
 		return 1
 	fi
 
-	ask_timeout "capture_handshake"
+	ask_timeout "capture_handshake_decloak"
 	sleeptimeattack=10
 
-	case ${et_dos_attack} in
+	case "${et_dos_attack}" in
 		"${mdk_command}")
 			rm -rf "${tmpdir}bl.txt" > /dev/null 2>&1
 			echo "${bssid}" > "${tmpdir}bl.txt"
+			iw dev "${interface}" set channel "${channel}" > /dev/null 2>&1
 			recalculate_windows_sizes
 			manage_output "+j -bg \"#000000\" -fg \"#FF0000\" -geometry ${g1_bottomleft_window} -T \"${mdk_command} amok attack\"" "timeout -s SIGTERM ${sleeptimeattack} ${mdk_command} ${interface} d -b ${tmpdir}bl.txt -c ${channel}" "${mdk_command} amok attack"
 		;;
 		"Aireplay")
-			${airmon} start "${interface}" "${channel}" > /dev/null 2>&1
+			iw dev "${interface}" set channel "${channel}" > /dev/null 2>&1
 			recalculate_windows_sizes
 			manage_output "+j -bg \"#000000\" -fg \"#FF0000\" -geometry ${g1_bottomleft_window} -T \"aireplay deauth attack\"" "timeout -s SIGTERM ${sleeptimeattack} aireplay-ng --deauth 0 -a ${bssid} --ignore-negative-one ${interface}" "aireplay deauth attack"
 		;;
-		"Wds Confusion")
+		"Auth DoS")
+			iw dev "${interface}" set channel "${channel}" > /dev/null 2>&1
 			recalculate_windows_sizes
-			manage_output "+j -bg \"#000000\" -fg \"#FF0000\" -geometry ${g1_bottomleft_window} -T \"wids / wips / wds confusion attack\"" "timeout -s SIGTERM ${sleeptimeattack} ${mdk_command} ${interface} w -e ${essid} -c ${channel}" "wids / wips / wds confusion attack"
+			manage_output "+j -bg \"#000000\" -fg \"#FF0000\" -geometry ${g1_bottomleft_window} -T \"auth dos attack\"" "timeout -s SIGTERM ${sleeptimeattack} ${mdk_command} ${interface} a -a ${bssid} -m" "auth dos attack"
 		;;
 	esac
 	processidattack=$!
@@ -794,6 +797,7 @@ function nogui_override_capture_handshake_window() {
 	manage_output "+j -sb -rightbar -geometry ${g1_topright_window} -T \"Capturing Handshake\"" "timeout --foreground -s SIGTERM ${timeout_capture_handshake} airodump-ng -c ${channel} -d ${bssid} -w ${tmpdir}handshake ${interface}" "Capturing Handshake" "active"
 }
 
+#shellcheck disable=SC2004
 function nogui_override_check_compatibility() {
 
 	debug_print
@@ -852,7 +856,7 @@ function nogui_override_check_compatibility() {
 		else
 			if [ "${i}" = "beef" ]; then
 				detect_fake_beef
-				if [ ${fake_beef_found} -eq 1 ]; then
+				if [ "${fake_beef_found}" -eq 1 ]; then
 					if ! "${AIRGEDDON_SILENT_CHECKS:-false}"; then
 						echo -ne "${red_color} Error${normal_color}"
 						echo -ne " (${possible_package_names_text[${language}]} : ${possible_package_names[${i}]})"
@@ -917,11 +921,11 @@ function nogui_override_check_compatibility() {
 	compatible=1
 
 	if ! "${AIRGEDDON_SILENT_CHECKS:-false}"; then
-		if [ ${optional_toolsok} -eq 0 ]; then
+		if [ "${optional_toolsok}" -eq 0 ]; then
 			echo
 			language_strings "${language}" 219 "yellow"
 
-			if [ ${fake_beef_found} -eq 1 ]; then
+			if [ "${fake_beef_found}" -eq 1 ]; then
 				echo
 				language_strings "${language}" 401 "red"
 				echo
@@ -934,9 +938,8 @@ function nogui_override_check_compatibility() {
 	fi
 }
 
-function initialize_nogui_language_strings() {
-
-	debug_print
+#Prehook for hookable_for_languages function to modify language strings
+function nogui_prehook_hookable_for_languages() {
 
 	arr["ENGLISH",nogui_text_1]="The attack is going to start. Press Ctrl+C to stop the attack and return to menu. Press Enter to continue..."
 	arr["SPANISH",nogui_text_1]="El ataque va a comenzar. Pulsa Ctrl+C para parar el ataque y volver al menú. Pulsa Enter para continuar..."
@@ -966,5 +969,3 @@ function initialize_nogui_language_strings() {
 	arr["ARABIC",nogui_text_2]="\${pending_of_translation} ...اضغط على Ctrl+C للعودة إلى القائمة"
 	arr["CHINESE",nogui_text_2]="按 Ctrl+C 返回菜单..."
 }
-
-initialize_nogui_language_strings

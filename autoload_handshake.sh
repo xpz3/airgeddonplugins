@@ -75,7 +75,6 @@ function autoload_handshake_override_ask_et_handshake_file() {
 }
 
 #Prehook for hookable_for_languages function to modify language strings
-#shellcheck disable=SC1111
 function autoload_handshake_prehook_hookable_for_languages() {
 
 	arr["ENGLISH","autoload_handshake_text_1"]="An already captured handshake file was found in \${ah_default_handshake_location}. Do you want to use that file? \${normal_color}\${visual_choice}"

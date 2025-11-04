@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #Global shellcheck disabled warnings
-#shellcheck disable=SC2034,SC2154
+#shellcheck disable=SC2034,SC2154,SC2124,SC2010,SC2027
 
 plugin_name="Airgeddon CLI"
 plugin_description="Plugin to use cli parameters to skip menu and start evil twin attack."
@@ -9,7 +9,7 @@ plugin_author="xpz3"
 
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="11.50"
+plugin_minimum_ag_affected_version="11.60"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -41,7 +41,7 @@ function airgeddon_cli_print_usage() {
 	echo $'\t[-c|-channnel|--channel <channel>\n\t\tSpecify target channel'
 	echo $'\t[-cl|--cl <captive portal password log path>]\n\t\tSpecify captive portal password save path on successful capture'
 	echo $'\t[-d|-debug|--debug]\n\t\tSet AIRGEDDON_DEBUG_MODE=true'
-	echo $'\t[-dos|--dos <DoS mode>]\n\t\tSpecify DoS attack option: 1=mkd4|mkd3 2=Aireplay-ng 3=WDS Confusion'
+	echo $'\t[-dos|--dos <DoS mode>]\n\t\tSpecify DoS attack option: 1=mkd4|mkd3 2=Aireplay-ng 3=Auth DoS'
 	echo $'\t[-e|-essid|--essid <essid>]\n\t\tSpecify target essid'
 	echo $'\t[-enc|--enc <encryption type>]\n\t\tSpecify target AP encryption {WPA|WPA2}'
 	echo $'\t[-f|-file|--file <filepath>]\n\t\tSpecify the filename containing target AP essid,bssid,channel,encryption and handshake file path delimited by "|" character. If this option is used, the values from the file will override any other values specified by command line.'
@@ -56,6 +56,7 @@ function airgeddon_cli_print_usage() {
 	echo $'\t[-u|-usage|--usage]\n\t\tPrints usage'
 }
 
+#shellcheck disable=SC2164
 function airgeddon_cli_get_absolute_script_path() {
 
 	debug_print
@@ -75,7 +76,7 @@ function airgeddon_cli_manage_captive_portal_log() {
 	debug_print
 
 	default_et_captive_portal_logpath="${default_save_path}"
-	default_et_captive_portallogfilename="evil_twin_captive_portal_password-${essid}.txt"
+	default_et_captive_portallogfilename=$(sanitize_path "evil_twin_captive_portal_password-${essid}.txt")
 	default_et_captive_portal_logpath="${default_et_captive_portal_logpath}${default_et_captive_portallogfilename}"
 	validpath=1
 }
@@ -151,7 +152,8 @@ function airgeddon_cli_verify_parameters() {
 		echo "No interface selected. Quitting..."
 		exit
 	else
-		local airgeddon_cli_interface_mode=$(iw "${interface}" info 2> /dev/null | grep type | awk '{print $2}')
+		local airgeddon_cli_interface_mode
+		airgeddon_cli_interface_mode=$(iw "${interface}" info 2> /dev/null | grep type | awk '{print $2}')
 		if [[ "${airgeddon_cli_interface_mode^}" != "Managed" ]];then
 			echo "The selected interface MUST be in Managed mode. Quitting..."
 			exit
@@ -381,7 +383,7 @@ if [ "$#" -gt 0 ];then
 		-d|--debug) # Enable airgeddon debug mode
 			AIRGEDDON_DEBUG_MODE="true"
 			;;
-		--dos) # DoS attack mode --> 1 = mdk4/mdk3, 2 = Aireplay, 3 = Wds Confusion
+		--dos) # DoS attack mode --> 1 = mdk4/mdk3, 2 = Aireplay, 3 = Auth DoS
 			case "${2}" in
 				1)
 					et_dos_attack="${mdk_command}"
@@ -390,7 +392,7 @@ if [ "$#" -gt 0 ];then
 					et_dos_attack="Aireplay"
 					;;
 				3)
-					et_dos_attack="Wds Confusion"
+					et_dos_attack="Auth DoS"
 					;;
 				*)
 					echo "Invalid DoS selection. Quitting..."
