@@ -10,7 +10,7 @@ plugin_author="xpz3"
 #Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="11.60"
+plugin_minimum_ag_affected_version="12.0"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -775,16 +775,28 @@ function customportals_override_et_prerequisites() {
 			fi
 			return
 		else
-			if [[ "${dos_pursuit_mode}" -eq 1 ]] && [[ -n "${channel}" ]] && [[ "${channel}" -gt 14 ]] && [[ "${interfaces_band_info['secondary_wifi_interface','5Ghz_allowed']}" -eq 0 ]]; then
-				echo
-				language_strings "${language}" 394 "red"
-				language_strings "${language}" 115 "read"
-				if [ -n "${enterprise_mode}" ]; then
-					return_to_enterprise_main_menu=1
-				else
-					return_to_et_main_menu=1
+			if [[ "${dos_pursuit_mode}" -eq 1 ]]; then
+				if [ "${target_band_id}" = "${band_6ghz}" ] && [ "${interfaces_band_info['secondary_wifi_interface','6Ghz_allowed']}" -eq 0 ]; then
+					echo
+					language_strings "${language}" 394 "red"
+					language_strings "${language}" 115 "read"
+					if [ -n "${enterprise_mode}" ]; then
+						return_to_enterprise_main_menu=1
+					else
+						return_to_et_main_menu=1
+					fi
+					return
+				elif [ "${target_band_id}" = "${band_5ghz}" ] && [ "${interfaces_band_info['secondary_wifi_interface','5Ghz_allowed']}" -eq 0 ]; then
+					echo
+					language_strings "${language}" 394 "red"
+					language_strings "${language}" 115 "read"
+					if [ -n "${enterprise_mode}" ]; then
+						return_to_enterprise_main_menu=1
+					else
+						return_to_et_main_menu=1
+					fi
+					return
 				fi
-				return
 			fi
 		fi
 		ask_essid "noverify"
