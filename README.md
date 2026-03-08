@@ -33,7 +33,10 @@
             <strong>1. Example CLI and Multint with File Mode</strong><code>bash airgeddon.sh --ap-interface wlan0 --deauth-interface wlan1 -f TargetAP.txt</code> Here both AP and Deauth interfaces are passed as CLI arguments and a filename with minimum required values to start the attack is specified too. The file contains <code>essid|bssid|channel|encryption|handshake_file_path.cap</code>.<br>
             <strong>2. Example Full CLI with Multint mode(No file, all arguments are typed)</strong> <code>bash airgeddon.sh --ap-interface wlan0 --deauth-interface wlan1 --essid "TargetAP" --bssid "AA:BB:CC:DD:EE:FF" --channel 6 --enc "WPA2" --hsfile "/root/handshake-AA:BB:CC:DD:EE:FF.cap"</code>. <strong>Note - When using this mode, make sure to not use the <code>-i wlanX</code> CLI argument as it is for the third mode which utilizes single VIF capable interface to run the attach through CLI mode.</strong> <br>
             <strong>3. Examples CLI No multint mode(the interface wlan0 must be VIF capable)</strong><br>
-                <code>bash airgeddon.sh -i wlan0 -f TargetAP.txt</code><br><code>bash airgeddon.sh -i wlan0 --essid "TargetAP" --bssid "AA:BB:CC:DD:EE:FF" --channel 6 --enc "WPA2" --hsfile "/root/handshake-AA:BB:CC:DD:EE:FF.cap"</code><br><strong>The detailed usage info can be found by downloading the plugin and then running</strong> <code>bash airgeddon.sh -u</code>
+                <code>bash airgeddon.sh -i wlan0 -f TargetAP.txt</code><br><code>bash airgeddon.sh -i wlan0 --essid "TargetAP" --bssid "AA:BB:CC:DD:EE:FF" --channel 6 --enc "WPA2" --hsfile "/root/handshake-AA:BB:CC:DD:EE:FF.cap"</code><br>
+            <strong>4. Example No CLI only interactive multint mode</strong><br>
+                <code>bash airgeddon.sh</code><br>
+            <strong>The detailed usage info can be found by downloading the plugin and then running</strong> <code>bash airgeddon.sh -u</code>
     </li>
 </ul>
 
