@@ -32,7 +32,7 @@ plugin_author="xpz3"
 
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="11.60"
+plugin_minimum_ag_affected_version="12.0"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -149,12 +149,12 @@ function airgeddon_cli_multint_read_target_values() {
 	et_handshake=$(echo "${airgeddon_cli_values_from_file}" | awk '{split($0,v,"|"); print v[5]}')
 }
 
-# Validate all parsed parameters before launching the attack.
-# Extended from the original to handle dual-interface mode.
+# Validate all parsed parameters before launching the attack
+# Extended from the original to handle dual-interface mode
 function airgeddon_cli_multint_verify_parameters() {
 
 	debug_print
-	
+
 	if [[ "${airgeddon_cli_tmux_active}" -eq 1 ]]; then
 		return
 	fi
@@ -206,7 +206,7 @@ function airgeddon_cli_multint_verify_parameters() {
 		interface="${multint_ap_interface}"
 		phy_interface=$(physical_interface_finder "${interface}")
 		interface_mac=$(ip link show "${interface}" | awk '/ether/ {print $2}')
-		
+
 		if [[ -n "${phy_interface}" ]]; then
 			check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
 			check_supported_standards "${phy_interface}"
@@ -258,6 +258,11 @@ function airgeddon_cli_multint_parse_parameters() {
 	ifacemode="Managed"
 	ifacemode_deauth="Monitor"
 
+	if ! check_target_band_supported_by_interface "main_wifi_interface"; then
+		exit_code=1
+		exit ${exit_code}
+	fi
+
 	language_strings "${language}" 101 "title"
 	print_iface_selected
 	print_all_target_vars
@@ -307,7 +312,6 @@ function airgeddon_cli_multint_et_prerequisites() {
 
 	rm -rf "${tmpdir}${channelfile}" > /dev/null 2>&1
 	echo "${channel}" > "${tmpdir}${channelfile}"
-	
 }
 
 # ============================================================================
@@ -384,8 +388,7 @@ function airgeddon_cli_multint_override_select_interface() {
 		fi
 
 		print_simple_separator
-		ifaces=$(ip link | grep -E "^[0-9]+" | cut -d ':' -f 2 | \
-		         awk '{print $1}' | grep -E "^lo$" -v)
+		ifaces=$(ip link | grep -E "^[0-9]+" | cut -d ':' -f 2 | awk '{print $1}' | grep -E "^lo$" -v)
 		option_counter=0
 		for item in ${ifaces}; do
 			option_counter=$((option_counter + 1))
@@ -571,7 +574,7 @@ function airgeddon_cli_multint_prehook_hardcore_exit() {
 function airgeddon_cli_multint_prehook_exit_script_option() {
 
 	debug_print
-	
+
 	if [[ "${multint_enabled}" -eq 1 ]]; then
 		set_mode_without_airmon "${multint_deauth_interface}" "managed"
 		if [ "${dos_pursuit_mode}" -eq 1 ]; then
@@ -655,7 +658,7 @@ function airgeddon_cli_multint_override_restore_et_interface() {
 
 # ============================================================================
 # Interactive mode to select secondary wifi interface for DoS Pursuit
-# when CLI mode is not enabled and interactive multint mode is chosen 
+# when CLI mode is not enabled and interactive multint mode is chosen
 # Exclude the AP and Deauth adapter from secondary interfaces in dual mode.
 # ============================================================================
 function airgeddon_cli_multint_override_select_secondary_interface() {
@@ -1179,7 +1182,7 @@ if [ "$#" -gt 0 ]; then
 			exit
 		fi
 
-		multint_enabled=1		
+		multint_enabled=1
 
 	elif [[ -n "${multint_ap_interface}" ]] && [[ -z "${multint_deauth_interface}" ]]; then
 		echo "--ap-interface requires --deauth-interface to also be specified. Quitting..."
