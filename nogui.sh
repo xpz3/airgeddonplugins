@@ -5,8 +5,8 @@
 
 ###### GENERIC PLUGIN VARS ######
 
-plugin_name="No Gui"
-plugin_description="Implement evil twin with captive portal attack without the need for xterm or tmux"
+plugin_name="No GUI"
+plugin_description="Implement evil twin with captive portal attack without the need for Xterm or Tmux"
 plugin_author="xpz3"
 
 #Enabled 1 / Disabled 0 - Set this plugin as enabled - Default value 1
@@ -15,7 +15,7 @@ plugin_enabled=1
 ###### PLUGIN REQUIREMENTS ######
 
 #Set airgeddon versions to apply this plugin (leave blank to set no limits, minimum version recommended is 10.0 on which plugins feature was added)
-plugin_minimum_ag_affected_version="11.60"
+plugin_minimum_ag_affected_version="12.0"
 plugin_maximum_ag_affected_version=""
 
 #Set only one element in the array "*" to affect all distros, otherwise add them one by one with the name which airgeddon uses for that distro (examples "BlackArch", "Parrot", "Kali")
@@ -59,7 +59,7 @@ function add_color() {
 function nogui_kill_processes() {
 
 	debug_print
-	
+
 	for item in "${nogui_processes[@]}"; do
 		kill "${item}" &> /dev/null
 	done
@@ -68,7 +68,7 @@ function nogui_kill_processes() {
 function nogui_posthook_kill_et_windows() {
 
 	debug_print
-	
+
 	nogui_kill_processes
 }
 
@@ -87,7 +87,7 @@ function nogui_override_manage_output() {
 	xterm_command_line="\"${2}\""
 	window_name="${3}"
 	command_tail=" > /dev/null 2>&1 &"
-	
+
 	nogui_command_line="${2}"
 	nogui_command_tail=" > \"/tmp/nogui-${window_name}.log\" 2>&1 &"
 	nogui_bgonly_command_tail=" &"
@@ -155,7 +155,7 @@ function nogui_override_manage_output() {
 function nogui_override_exec_et_captive_portal_attack() {
 
 	debug_print
-	
+
 	rm -rf /tmp/*.log
 	rm -rf "${tmpdir}${webdir}" > /dev/null 2>&1
 	mkdir "${tmpdir}${webdir}" > /dev/null 2>&1
@@ -178,7 +178,7 @@ function nogui_override_exec_et_captive_portal_attack() {
 	set_captive_portal_page
 	launch_webserver
 	write_et_processes
-	
+
 	declare -A nogui_line_index
 	nogui_line_index["/tmp/nogui-AP.log"]=0
 	nogui_line_index["/tmp/nogui-DHCP.log"]=0
@@ -198,7 +198,7 @@ function nogui_override_exec_et_captive_portal_attack() {
 			:
 				[[ "${i}" =~ ^/tmp/.*-(.*).log ]] && nogui_log_prefix="${BASH_REMATCH[1]}"
 				j="${nogui_line_index[$i]}"
-				
+
 				linesToSkip="${j}"
 				((linesToSkip-1))
 				if [ -f "${i}" ];then
@@ -239,22 +239,48 @@ function nogui_override_capture_traps() {
 					;;
 					*)
 						if [ "${nogui_skip_trap}" -eq 0 ]; then
-							if [ "${nogui_et_running}" -eq 1 ]; then
-									kill_et_windows
+							if [ -n "${capture_traps_in_progress}" ]; then
+								echo
+								language_strings "${language}" 12 "green"
+								echo -n "> "
+								return
+							fi
 
-									if [ "${dos_pursuit_mode}" -eq 1 ]; then
-										recover_current_channel
-									fi
-									restore_et_interface
-									clean_tmpfiles
-									nogui_et_running=0
-									evil_twin_attacks_menu
+							capture_traps_in_progress=1
+							local previous_default_choice="${default_choice}"
+							if [ "${nogui_et_running}" -eq 1 ]; then
+								kill_et_windows
+
+								if [ "${dos_pursuit_mode}" -eq 1 ]; then
+									recover_current_channel
+								fi
+								restore_et_interface
+								clean_tmpfiles
+								nogui_et_running=0
+								capture_traps_in_progress=""
+								evil_twin_attacks_menu
 							else
 								ask_yesno 12 "yes"
 								if [ "${yesno}" = "y" ]; then
-										exit_code=1
-										exit_script_option
+									exit_code=1
+									capture_traps_in_progress=""
+									exit_script_option
 								else
+									if [ -n "${previous_default_choice}" ]; then
+										default_choice="${previous_default_choice}"
+										case ${previous_default_choice^^} in
+											"Y"|"YES")
+												visual_choice="[Y/n]"
+											;;
+											"N"|"NO")
+												visual_choice="[y/N]"
+											;;
+											"")
+												visual_choice="[y/n]"
+											;;
+										esac
+									fi
+
 									language_strings "${language}" 224 "blue"
 									if [ "${last_buffered_type1}" = "read" ]; then
 										language_strings "${language}" "${last_buffered_message2}" "${last_buffered_type2}"
@@ -281,6 +307,8 @@ function nogui_override_capture_traps() {
 		echo
 		hardcore_exit
 	fi
+
+	capture_traps_in_progress=""
 }
 
 function evil_twin_attacks_menu() {
