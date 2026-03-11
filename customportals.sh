@@ -774,29 +774,24 @@ function customportals_override_et_prerequisites() {
 				return_to_et_main_menu=1
 			fi
 			return
+		elif ! check_target_band_supported_by_interface "main_wifi_interface"; then
+			if [ -n "${enterprise_mode}" ]; then
+				return_to_enterprise_main_menu=1
+			else
+				return_to_et_main_menu=1
+			fi
+			return
 		else
-			if [[ "${dos_pursuit_mode}" -eq 1 ]]; then
-				if [ "${target_band_id}" = "${band_6ghz}" ] && [ "${interfaces_band_info['secondary_wifi_interface','6Ghz_allowed']}" -eq 0 ]; then
-					echo
-					language_strings "${language}" 394 "red"
-					language_strings "${language}" 115 "read"
-					if [ -n "${enterprise_mode}" ]; then
-						return_to_enterprise_main_menu=1
-					else
-						return_to_et_main_menu=1
-					fi
-					return
-				elif [ "${target_band_id}" = "${band_5ghz}" ] && [ "${interfaces_band_info['secondary_wifi_interface','5Ghz_allowed']}" -eq 0 ]; then
-					echo
-					language_strings "${language}" 394 "red"
-					language_strings "${language}" 115 "read"
-					if [ -n "${enterprise_mode}" ]; then
-						return_to_enterprise_main_menu=1
-					else
-						return_to_et_main_menu=1
-					fi
-					return
+			if [[ "${dos_pursuit_mode}" -eq 1 && ( ("${target_band_id}" = "${band_6ghz}" && "${interfaces_band_info['secondary_wifi_interface','6Ghz_allowed']}" -eq 0) || ("${target_band_id}" = "${band_5ghz}" && "${interfaces_band_info['secondary_wifi_interface','5Ghz_allowed']}" -eq 0) ) ]]; then
+				echo
+				language_strings "${language}" 394 "red"
+				language_strings "${language}" 115 "read"
+				if [ -n "${enterprise_mode}" ]; then
+					return_to_enterprise_main_menu=1
+				else
+					return_to_et_main_menu=1
 				fi
+				return
 			fi
 		fi
 		ask_essid "noverify"
