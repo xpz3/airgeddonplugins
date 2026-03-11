@@ -10,7 +10,7 @@ plugin_author="xpz3"
 #Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="11.60"
+plugin_minimum_ag_affected_version="12.0"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -22,7 +22,7 @@ mass_handshake_capture_dos_attack_timeout=15
 
 #The time in seconds to wait for capturing a handshake after the DoS attack windows gets automatically closed by airgeddon
 handshake_capture_timeout_after_dos_exits=10
- 
+
 timeout_capture_handshake_decloak="${handshake_capture_timeout_after_dos_exits}"
 timeout="${timeout_capture_handshake_decloak}"
 
@@ -158,13 +158,8 @@ function mass_handshake_capture_capture_pmkid_handshake() {
 		return 1
 	fi
 
-	if [ "${channel}" -gt 14 ]; then
-		if [ "${interfaces_band_info['main_wifi_interface','5Ghz_allowed']}" -eq 0 ]; then
-			echo
-			language_strings "${language}" 515 "red"
-			language_strings "${language}" 115 "read"
-			return 1
-		fi
+	if ! check_target_band_supported_by_interface; then
+		return 1
 	fi
 
 	if ! validate_network_encryption_type "WPA"; then
