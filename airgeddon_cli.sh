@@ -3,13 +3,13 @@
 #Global shellcheck disabled warnings
 #shellcheck disable=SC2034,SC2154,SC2124,SC2010,SC2027
 
-plugin_name="Airgeddon CLI"
-plugin_description="Plugin to use cli parameters to skip menu and start evil twin attack."
+plugin_name="airgeddon CLI"
+plugin_description="Plugin to use CLI parameters to skip menu and start evil twin attack"
 plugin_author="xpz3"
 
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="11.60"
+plugin_minimum_ag_affected_version="12.0"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -147,7 +147,7 @@ function airgeddon_cli_verify_parameters() {
 		echo "Invalid ESSID/Channel/Encryption. Quitting..."
 		exit
 	fi
-	
+
 	if [[ -z "${interface}" ]];then
 		echo "No interface selected. Quitting..."
 		exit
@@ -185,6 +185,11 @@ function airgeddon_cli_parse_parameters() {
 	ifacemode="Managed"
 
 	check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
+	if ! check_target_band_supported_by_interface "main_wifi_interface"; then
+		exit_code=1
+		exit ${exit_code}
+	fi
+
 	language_strings "${language}" 101 "title"
 	print_iface_selected
 	print_all_target_vars
