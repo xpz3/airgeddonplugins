@@ -1095,6 +1095,18 @@ if [ "$#" -gt 0 ]; then
 				if [ -z "${2}" ]; then
 					echo "Filename cannot be empty. Quitting..."
 					exit
+				fi
+
+				if [ -f "${2}" ]; then
+					airgeddon_cli_target_file="${2##*/}"
+					dir="${2%/*}"
+					if [ "${dir}" = "${2}" ]; then
+						airgeddon_cli_targets_default_path="./"
+					else
+						airgeddon_cli_targets_default_path="${dir%/}/"
+					fi
+
+					airgeddon_cli_filemode=1
 				else
 					if ! check_file_exists "${airgeddon_cli_targets_default_path}${2}"; then
 						echo "File not found. Quitting..."
@@ -1103,6 +1115,7 @@ if [ "$#" -gt 0 ]; then
 					airgeddon_cli_target_file="${2}"
 					airgeddon_cli_filemode=1
 				fi
+
 				airgeddon_cli_multint_read_target_values
 				shift
 				;;
