@@ -6,7 +6,7 @@
 # ============================================================================
 # airgeddon_cli_multint.sh
 #
-# Combined plugin: CLI non-interactive automation + dual WiFi adapter support
+# Combined plugin: CLI non-interactive automation + dual Wi-Fi adapter support
 # for Evil Twin with Captive Portal attack.
 #
 # Merges:
@@ -23,7 +23,7 @@
 #
 # Author  : xpz3
 # License : GPL-3.0
-# Minimum airgeddon : 11.60
+# Minimum airgeddon : 12.0
 # ============================================================================
 
 plugin_name="airgeddon_cli_multint"
@@ -657,7 +657,7 @@ function airgeddon_cli_multint_override_restore_et_interface() {
 }
 
 # ============================================================================
-# Interactive mode to select secondary wifi interface for DoS Pursuit
+# Interactive mode to select secondary Wi-Fi interface for DoS Pursuit
 # when CLI mode is not enabled and interactive multint mode is chosen
 # Exclude the AP and Deauth adapter from secondary interfaces in dual mode.
 # ============================================================================
@@ -1026,7 +1026,7 @@ if [ "$#" -gt 0 ]; then
 	if ! airgeddon_cli_arguments=$(getopt -a \
 		--options="ab:c:de:f:h:i:l:mp:tuv" \
 		--longoptions="advportal,ap-interface:,bssid:,channel:,cplang:,cl:,debug,deauth-interface:,dos:,dp:,enc:,essid:,file:,hsfile:,interface:,ms,nk,tmux,usage,version" \
-		--name="Airgeddon v${airgeddon_version}" -- "$@"
+		--name="airgeddon v${airgeddon_version}" -- "$@"
 	); then
 		airgeddon_cli_multint_print_usage
 		exit
@@ -1178,7 +1178,7 @@ if [ "$#" -gt 0 ]; then
 				if hash git 2>/dev/null; then
 					airgeddon_cli_git_rev=" rev_"$(git rev-parse --short HEAD)"("$(git rev-parse --abbrev-ref HEAD)" branch)"
 				fi
-				echo "Airgeddon v${airgeddon_version}${airgeddon_cli_git_rev}"
+				echo "airgeddon v${airgeddon_version}${airgeddon_cli_git_rev}"
 				exit
 				;;
 		esac
