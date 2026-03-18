@@ -161,15 +161,15 @@ function airgeddon_cli_multint_verify_parameters() {
 
 	# Validate target network values
 	if ! [[ "${bssid}" =~ ^([[:xdigit:]]{2}[:]){5}([[:xdigit:]]{2})$ ]]; then
-		echo "Invalid BSSID. Quitting..."
+		language_strings "${language}" "climult_err_invalid_bssid" "red"
 		exit
 	fi
 	if [[ -z "${essid}" ]] || [[ -z "${channel}" ]] || [[ -z "${enc}" ]]; then
-		echo "Invalid ESSID/Channel/Encryption. Quitting..."
+		language_strings "${language}" "climult_err_invalid_target_vals" "red"
 		exit
 	fi
 	if [[ "${et_handshake}" = "" ]]; then
-		echo "Handshake file not specified. Quitting..."
+		language_strings "${language}" "climult_err_no_handshake" "red"
 		exit
 	fi
 
@@ -178,28 +178,28 @@ function airgeddon_cli_multint_verify_parameters() {
 
 		# Validate AP interface
 		if [[ -z "${multint_ap_interface}" ]]; then
-			echo "No AP interface specified (--ap-interface). Quitting..."
+			language_strings "${language}" "climult_err_no_ap_iface" "red"
 			exit
 		fi
 		local airgeddon_cli_multint_mode
 		airgeddon_cli_multint_mode=$(iw "${multint_ap_interface}" info 2>/dev/null | grep type | awk '{print $2}')
 		if [[ "${airgeddon_cli_multint_mode^}" != "Managed" ]]; then
-			echo "The AP interface (${multint_ap_interface}) MUST be in Managed mode. Quitting..."
+			language_strings "${language}" "climult_err_ap_managed" "red"
 			exit
 		fi
 
 		# Validate deauth interface
 		if [[ -z "${multint_deauth_interface}" ]]; then
-			echo "No deauth interface specified (--deauth-interface). Quitting..."
+			language_strings "${language}" "climult_err_no_deauth_iface" "red"
 			exit
 		fi
 		airgeddon_cli_multint_mode=$(iw "${multint_deauth_interface}" info 2>/dev/null | grep type | awk '{print $2}')
 		if [[ "${airgeddon_cli_multint_mode^}" != "Managed" ]]; then
-			echo "The Deauth interface (${multint_deauth_interface}) MUST be in Managed mode. Quitting..."
+			language_strings "${language}" "climult_err_deauth_managed" "red"
 			exit
 		fi
 		if [[ "${multint_ap_interface}" = "${multint_deauth_interface}" ]]; then
-			echo "AP interface and deauth interface cannot be the same. Quitting..."
+			language_strings "${language}" "climult_err_ap_deauth_same" "red"
 			exit
 		fi
 
@@ -225,12 +225,12 @@ function airgeddon_cli_multint_verify_parameters() {
 	# ── SINGLE VIF-CAPABLE ADAPTER MODE validation ────────────────────────────
 	else
 		if [[ -z "${interface}" ]]; then
-			echo "No interface selected. Quitting..."
+			language_strings "${language}" "climult_err_no_iface" "red"
 			exit
 		fi
 		local airgeddon_cli_interface_mode=$(iw "${interface}" info 2> /dev/null | grep type | awk '{print $2}')
 		if [[ "${airgeddon_cli_interface_mode^}" != "Managed" ]];then
-			echo "The selected interface MUST be in Managed mode. Quitting..."
+			language_strings "${language}" "climult_err_iface_managed" "red"
 			exit
 		fi
 	fi
@@ -867,8 +867,7 @@ function airgeddon_cli_multint_override_start_airgeddon_from_tmux() {
 	debug_print
 
 	tmux rename-window -t "${session_name}" "${tmux_main_window}"
-	tmux send-keys -t "${session_name}:${tmux_main_window}" \
-	     "clear;cd ${scriptfolder};bash ${scriptname} true ${airgeddon_uid}" ENTER
+	tmux send-keys -t "${session_name}:${tmux_main_window}" "clear;cd ${scriptfolder};bash ${scriptname} true ${airgeddon_uid}" ENTER
 	sleep 0.2
 	if [ "${1}" = "normal" ]; then
 		tmux attach -t "${session_name}"
@@ -999,6 +998,300 @@ function airgeddon_cli_multint_prehook_hookable_for_languages() {
 	arr["TURKISH","climult_iface_deauth_status"]="\${pending_of_translation} Deauth Monitor Mode: \${pink_color}\${multint_deauth_interface}\${blue_color} seçildi. Mod: \${pink_color}\${ifacemode_deauth}\${blue_color}\${normal_color}"
 	arr["ARABIC","climult_iface_deauth_status"]="\${pending_of_translation} واجهة Deauth للمراقبة: \${pink_color}\${multint_deauth_interface}\${blue_color} محدد. الوضع: \${pink_color}\${ifacemode_deauth}\${blue_color}\${normal_color}"
 	arr["CHINESE","climult_iface_deauth_status"]="\${pending_of_translation} Deauth监控模式接口: \${pink_color}\${multint_deauth_interface}\${blue_color} 已选。模式: \${pink_color}\${ifacemode_deauth}\${blue_color}\${normal_color}"
+
+	arr["ENGLISH","climult_err_invalid_bssid"]="Invalid BSSID. Quitting..."
+	arr["SPANISH","climult_err_invalid_bssid"]="BSSID no válido. Saliendo..."
+	arr["FRENCH","climult_err_invalid_bssid"]="\${pending_of_translation} BSSID invalide. Sortie..."
+	arr["CATALAN","climult_err_invalid_bssid"]="\${pending_of_translation} BSSID no vàlid. Sortint..."
+	arr["PORTUGUESE","climult_err_invalid_bssid"]="\${pending_of_translation} BSSID inválido. Saindo..."
+	arr["RUSSIAN","climult_err_invalid_bssid"]="\${pending_of_translation} Недопустимый BSSID. Выход..."
+	arr["GREEK","climult_err_invalid_bssid"]="\${pending_of_translation} Μη έγκυρο BSSID. Έξοδος..."
+	arr["ITALIAN","climult_err_invalid_bssid"]="\${pending_of_translation} BSSID non valido. Uscita..."
+	arr["POLISH","climult_err_invalid_bssid"]="\${pending_of_translation} Nieprawidłowy BSSID. Kończenie..."
+	arr["GERMAN","climult_err_invalid_bssid"]="\${pending_of_translation} Ungültige BSSID. Beenden..."
+	arr["TURKISH","climult_err_invalid_bssid"]="\${pending_of_translation} Geçersiz BSSID. Çıkılıyor..."
+	arr["ARABIC","climult_err_invalid_bssid"]="\${pending_of_translation} ...جارٍ الخروج. BSSID غير صالح"
+	arr["CHINESE","climult_err_invalid_bssid"]="\${pending_of_translation} BSSID 无效。正在退出..."
+
+	arr["ENGLISH","climult_err_invalid_target_vals"]="Invalid ESSID/Channel/Encryption. Quitting..."
+	arr["SPANISH","climult_err_invalid_target_vals"]="ESSID/Canal/Cifrado no válido. Saliendo..."
+	arr["FRENCH","climult_err_invalid_target_vals"]="\${pending_of_translation} ESSID/Canal/Chiffrement invalide. Sortie..."
+	arr["CATALAN","climult_err_invalid_target_vals"]="\${pending_of_translation} ESSID/Canal/Xifrat no vàlid. Sortint..."
+	arr["PORTUGUESE","climult_err_invalid_target_vals"]="\${pending_of_translation} ESSID/Canal/Criptografia inválido. Saindo..."
+	arr["RUSSIAN","climult_err_invalid_target_vals"]="\${pending_of_translation} Недопустимые ESSID/Канал/Шифрование. Выход..."
+	arr["GREEK","climult_err_invalid_target_vals"]="\${pending_of_translation} Μη έγκυρο ESSID/Κανάλι/Κρυπτογράφηση. Έξοδος..."
+	arr["ITALIAN","climult_err_invalid_target_vals"]="\${pending_of_translation} ESSID/Canale/Cifratura non valido. Uscita..."
+	arr["POLISH","climult_err_invalid_target_vals"]="\${pending_of_translation} Nieprawidłowy ESSID/Kanał/Szyfrowanie. Kończenie..."
+	arr["GERMAN","climult_err_invalid_target_vals"]="\${pending_of_translation} Ungültige ESSID/Kanal/Verschlüsselung. Beenden..."
+	arr["TURKISH","climult_err_invalid_target_vals"]="\${pending_of_translation} Geçersiz ESSID/Kanal/Şifreleme. Çıkılıyor..."
+	arr["ARABIC","climult_err_invalid_target_vals"]="\${pending_of_translation} ...جارٍ الخروج. ESSID/القناة/التشفير غير صالح"
+	arr["CHINESE","climult_err_invalid_target_vals"]="\${pending_of_translation} ESSID/信道/加密 无效。正在退出..."
+
+	arr["ENGLISH","climult_err_no_handshake"]="Handshake file not specified. Quitting..."
+	arr["SPANISH","climult_err_no_handshake"]="Archivo de handshake no especificado. Saliendo..."
+	arr["FRENCH","climult_err_no_handshake"]="\${pending_of_translation} Fichier de handshake non spécifié. Sortie..."
+	arr["CATALAN","climult_err_no_handshake"]="\${pending_of_translation} Fitxer de handshake no especificat. Sortint..."
+	arr["PORTUGUESE","climult_err_no_handshake"]="\${pending_of_translation} Arquivo de handshake não especificado. Saindo..."
+	arr["RUSSIAN","climult_err_no_handshake"]="\${pending_of_translation} Файл handshake не указан. Выход..."
+	arr["GREEK","climult_err_no_handshake"]="\${pending_of_translation} Το αρχείο handshake δεν καθορίστηκε. Έξοδος..."
+	arr["ITALIAN","climult_err_no_handshake"]="\${pending_of_translation} File di handshake non specificato. Uscita..."
+	arr["POLISH","climult_err_no_handshake"]="\${pending_of_translation} Plik handshake nie został określony. Kończenie..."
+	arr["GERMAN","climult_err_no_handshake"]="\${pending_of_translation} Handshake-Datei nicht angegeben. Beenden..."
+	arr["TURKISH","climult_err_no_handshake"]="\${pending_of_translation} Handshake dosyası belirtilmedi. Çıkılıyor..."
+	arr["ARABIC","climult_err_no_handshake"]="\${pending_of_translation} ...جارٍ الخروج. لم يتم تحديد ملف handshake"
+	arr["CHINESE","climult_err_no_handshake"]="\${pending_of_translation} 未指定 handshake 文件。正在退出..."
+
+	arr["ENGLISH","climult_err_no_ap_iface"]="No AP interface specified (--ap-interface). Quitting..."
+	arr["SPANISH","climult_err_no_ap_iface"]="No se ha especificado interfaz AP (--ap-interface). Saliendo..."
+	arr["FRENCH","climult_err_no_ap_iface"]="\${pending_of_translation} Aucune interface AP spécifiée (--ap-interface). Sortie..."
+	arr["CATALAN","climult_err_no_ap_iface"]="\${pending_of_translation} No s'ha especificat cap interfície AP (--ap-interface). Sortint..."
+	arr["PORTUGUESE","climult_err_no_ap_iface"]="\${pending_of_translation} Nenhuma interface AP especificada (--ap-interface). Saindo..."
+	arr["RUSSIAN","climult_err_no_ap_iface"]="\${pending_of_translation} Интерфейс AP не указан (--ap-interface). Выход..."
+	arr["GREEK","climult_err_no_ap_iface"]="\${pending_of_translation} Δεν έχει καθοριστεί διεπαφή AP (--ap-interface). Έξοδος..."
+	arr["ITALIAN","climult_err_no_ap_iface"]="\${pending_of_translation} Nessuna interfaccia AP specificata (--ap-interface). Uscita..."
+	arr["POLISH","climult_err_no_ap_iface"]="\${pending_of_translation} Nie określono interfejsu AP (--ap-interface). Kończenie..."
+	arr["GERMAN","climult_err_no_ap_iface"]="\${pending_of_translation} Keine AP-Schnittstelle angegeben (--ap-interface). Beenden..."
+	arr["TURKISH","climult_err_no_ap_iface"]="\${pending_of_translation} AP arayüzü belirtilmedi (--ap-interface). Çıkılıyor..."
+	arr["ARABIC","climult_err_no_ap_iface"]="\${pending_of_translation} ...جارٍ الخروج. لم يتم تحديد واجهة AP (--ap-interface)"
+	arr["CHINESE","climult_err_no_ap_iface"]="\${pending_of_translation} 未指定 AP 接口 (--ap-interface)。正在退出..."
+
+	arr["ENGLISH","climult_err_ap_managed"]="The AP interface (\${multint_ap_interface}) MUST be in Managed mode. Quitting..."
+	arr["SPANISH","climult_err_ap_managed"]="La interfaz AP (\${multint_ap_interface}) DEBE estar en modo Managed. Saliendo..."
+	arr["FRENCH","climult_err_ap_managed"]="\${pending_of_translation} L'interface AP (\${multint_ap_interface}) DOIT être en mode Managed. Sortie..."
+	arr["CATALAN","climult_err_ap_managed"]="\${pending_of_translation} La interfície AP (\${multint_ap_interface}) HA d'estar en mode Managed. Sortint..."
+	arr["PORTUGUESE","climult_err_ap_managed"]="\${pending_of_translation} A interface AP (\${multint_ap_interface}) DEVE estar em modo Managed. Saindo..."
+	arr["RUSSIAN","climult_err_ap_managed"]="\${pending_of_translation} Интерфейс AP (\${multint_ap_interface}) ДОЛЖЕН быть в режиме Managed. Выход..."
+	arr["GREEK","climult_err_ap_managed"]="\${pending_of_translation} Η διεπαφή AP (\${multint_ap_interface}) ΠΡΕΠΕΙ να είναι σε λειτουργία Managed. Έξοδος..."
+	arr["ITALIAN","climult_err_ap_managed"]="\${pending_of_translation} L'interfaccia AP (\${multint_ap_interface}) DEVE essere in modalità Managed. Uscita..."
+	arr["POLISH","climult_err_ap_managed"]="\${pending_of_translation} Interfejs AP (\${multint_ap_interface}) MUSI być w trybie Managed. Kończenie..."
+	arr["GERMAN","climult_err_ap_managed"]="\${pending_of_translation} Die AP-Schnittstelle (\${multint_ap_interface}) MUSS im Managed-Modus sein. Beenden..."
+	arr["TURKISH","climult_err_ap_managed"]="\${pending_of_translation} AP arayüzü (\${multint_ap_interface}) Managed modunda OLMALIDIR. Çıkılıyor..."
+	arr["ARABIC","climult_err_ap_managed"]="\${pending_of_translation} ...جارٍ الخروج. يجب أن تكون واجهة AP (\${multint_ap_interface}) في وضع Managed"
+	arr["CHINESE","climult_err_ap_managed"]="\${pending_of_translation} AP 接口 (\${multint_ap_interface}) 必须处于 Managed 模式。正在退出..."
+
+	arr["ENGLISH","climult_err_no_deauth_iface"]="No deauth interface specified (--deauth-interface). Quitting..."
+	arr["SPANISH","climult_err_no_deauth_iface"]="No se ha especificado interfaz de deauth (--deauth-interface). Saliendo..."
+	arr["FRENCH","climult_err_no_deauth_iface"]="\${pending_of_translation} Aucune interface de deauth spécifiée (--deauth-interface). Sortie..."
+	arr["CATALAN","climult_err_no_deauth_iface"]="\${pending_of_translation} No s'ha especificat cap interfície de deauth (--deauth-interface). Sortint..."
+	arr["PORTUGUESE","climult_err_no_deauth_iface"]="\${pending_of_translation} Nenhuma interface de deauth especificada (--deauth-interface). Saindo..."
+	arr["RUSSIAN","climult_err_no_deauth_iface"]="\${pending_of_translation} Интерфейс deauth не указан (--deauth-interface). Выход..."
+	arr["GREEK","climult_err_no_deauth_iface"]="\${pending_of_translation} Δεν έχει καθοριστεί διεπαφή deauth (--deauth-interface). Έξοδος..."
+	arr["ITALIAN","climult_err_no_deauth_iface"]="\${pending_of_translation} Nessuna interfaccia deauth specificata (--deauth-interface). Uscita..."
+	arr["POLISH","climult_err_no_deauth_iface"]="\${pending_of_translation} Nie określono interfejsu deauth (--deauth-interface). Kończenie..."
+	arr["GERMAN","climult_err_no_deauth_iface"]="\${pending_of_translation} Keine deauth-Schnittstelle angegeben (--deauth-interface). Beenden..."
+	arr["TURKISH","climult_err_no_deauth_iface"]="\${pending_of_translation} Deauth arayüzü belirtilmedi (--deauth-interface). Çıkılıyor..."
+	arr["ARABIC","climult_err_no_deauth_iface"]="\${pending_of_translation} ...جارٍ الخروج. لم يتم تحديد واجهة deauth (--deauth-interface)"
+	arr["CHINESE","climult_err_no_deauth_iface"]="\${pending_of_translation} 未指定 deauth 接口 (--deauth-interface)。正在退出..."
+
+	arr["ENGLISH","climult_err_deauth_managed"]="The Deauth interface (\${multint_deauth_interface}) MUST be in Managed mode. Quitting..."
+	arr["SPANISH","climult_err_deauth_managed"]="La interfaz de deauth (\${multint_deauth_interface}) DEBE estar en modo Managed. Saliendo..."
+	arr["FRENCH","climult_err_deauth_managed"]="\${pending_of_translation} L'interface de deauth (\${multint_deauth_interface}) DOIT être en mode Managed. Sortie..."
+	arr["CATALAN","climult_err_deauth_managed"]="\${pending_of_translation} La interfície de deauth (\${multint_deauth_interface}) HA d'estar en mode Managed. Sortint..."
+	arr["PORTUGUESE","climult_err_deauth_managed"]="\${pending_of_translation} A interface de deauth (\${multint_deauth_interface}) DEVE estar em modo Managed. Saindo..."
+	arr["RUSSIAN","climult_err_deauth_managed"]="\${pending_of_translation} Интерфейс deauth (\${multint_deauth_interface}) ДОЛЖЕН быть в режиме Managed. Выход..."
+	arr["GREEK","climult_err_deauth_managed"]="\${pending_of_translation} Η διεπαφή deauth (\${multint_deauth_interface}) ΠΡΕΠΕΙ να είναι σε λειτουργία Managed. Έξοδος..."
+	arr["ITALIAN","climult_err_deauth_managed"]="\${pending_of_translation} L'interfaccia deauth (\${multint_deauth_interface}) DEVE essere in modalità Managed. Uscita..."
+	arr["POLISH","climult_err_deauth_managed"]="\${pending_of_translation} Interfejs deauth (\${multint_deauth_interface}) MUSI być w trybie Managed. Kończenie..."
+	arr["GERMAN","climult_err_deauth_managed"]="\${pending_of_translation} Die deauth-Schnittstelle (\${multint_deauth_interface}) MUSS im Managed-Modus sein. Beenden..."
+	arr["TURKISH","climult_err_deauth_managed"]="\${pending_of_translation} Deauth arayüzü (\${multint_deauth_interface}) Managed modunda OLMALIDIR. Çıkılıyor..."
+	arr["ARABIC","climult_err_deauth_managed"]="\${pending_of_translation} ...جارٍ الخروج. يجب أن تكون واجهة deauth (\${multint_deauth_interface}) في وضع Managed"
+	arr["CHINESE","climult_err_deauth_managed"]="\${pending_of_translation} deauth 接口 (\${multint_deauth_interface}) 必须处于 Managed 模式。正在退出..."
+
+	arr["ENGLISH","climult_err_ap_deauth_same"]="AP interface and deauth interface cannot be the same. Quitting..."
+	arr["SPANISH","climult_err_ap_deauth_same"]="La interfaz AP y la interfaz de deauth no pueden ser la misma. Saliendo..."
+	arr["FRENCH","climult_err_ap_deauth_same"]="\${pending_of_translation} L'interface AP et l'interface de deauth ne peuvent pas être identiques. Sortie..."
+	arr["CATALAN","climult_err_ap_deauth_same"]="\${pending_of_translation} La interfície AP i la interfície de deauth no poden ser la mateixa. Sortint..."
+	arr["PORTUGUESE","climult_err_ap_deauth_same"]="\${pending_of_translation} A interface AP e a interface de deauth não podem ser a mesma. Saindo..."
+	arr["RUSSIAN","climult_err_ap_deauth_same"]="\${pending_of_translation} Интерфейс AP и интерфейс deauth не могут быть одинаковыми. Выход..."
+	arr["GREEK","climult_err_ap_deauth_same"]="\${pending_of_translation} Η διεπαφή AP και η διεπαφή deauth δεν μπορούν να είναι ίδιες. Έξοδος..."
+	arr["ITALIAN","climult_err_ap_deauth_same"]="\${pending_of_translation} L'interfaccia AP e l'interfaccia deauth non possono essere la stessa. Uscita..."
+	arr["POLISH","climult_err_ap_deauth_same"]="\${pending_of_translation} Interfejs AP i interfejs deauth nie mogą być takie same. Kończenie..."
+	arr["GERMAN","climult_err_ap_deauth_same"]="\${pending_of_translation} AP-Schnittstelle und deauth-Schnittstelle können nicht gleich sein. Beenden..."
+	arr["TURKISH","climult_err_ap_deauth_same"]="\${pending_of_translation} AP arayüzü ve deauth arayüzü aynı olamaz. Çıkılıyor..."
+	arr["ARABIC","climult_err_ap_deauth_same"]="\${pending_of_translation} ...جارٍ الخروج. لا يمكن أن تكون واجهة AP وواجهة deauth متطابقتين"
+	arr["CHINESE","climult_err_ap_deauth_same"]="\${pending_of_translation} AP 接口和 deauth 接口不能相同。正在退出..."
+
+	arr["ENGLISH","climult_err_no_iface"]="No interface selected. Quitting..."
+	arr["SPANISH","climult_err_no_iface"]="No se ha seleccionado ninguna interfaz. Saliendo..."
+	arr["FRENCH","climult_err_no_iface"]="\${pending_of_translation} Aucune interface sélectionnée. Sortie..."
+	arr["CATALAN","climult_err_no_iface"]="\${pending_of_translation} No s'ha seleccionat cap interfície. Sortint..."
+	arr["PORTUGUESE","climult_err_no_iface"]="\${pending_of_translation} Nenhuma interface selecionada. Saindo..."
+	arr["RUSSIAN","climult_err_no_iface"]="\${pending_of_translation} Интерфейс не выбран. Выход..."
+	arr["GREEK","climult_err_no_iface"]="\${pending_of_translation} Δεν έχει επιλεγεί διεπαφή. Έξοδος..."
+	arr["ITALIAN","climult_err_no_iface"]="\${pending_of_translation} Nessuna interfaccia selezionata. Uscita..."
+	arr["POLISH","climult_err_no_iface"]="\${pending_of_translation} Nie wybrano żadnego interfejsu. Kończenie..."
+	arr["GERMAN","climult_err_no_iface"]="\${pending_of_translation} Keine Schnittstelle ausgewählt. Beenden..."
+	arr["TURKISH","climult_err_no_iface"]="\${pending_of_translation} Herhangi bir arayüz seçilmedi. Çıkılıyor..."
+	arr["ARABIC","climult_err_no_iface"]="\${pending_of_translation} ...جارٍ الخروج. لم يتم اختيار أي واجهة"
+	arr["CHINESE","climult_err_no_iface"]="\${pending_of_translation} 未选择任何接口。正在退出..."
+
+	arr["ENGLISH","climult_err_iface_managed"]="The selected interface MUST be in Managed mode. Quitting..."
+	arr["SPANISH","climult_err_iface_managed"]="La interfaz seleccionada DEBE estar en modo Managed. Saliendo..."
+	arr["FRENCH","climult_err_iface_managed"]="\${pending_of_translation} L'interface sélectionnée DOIT être en mode Managed. Sortie..."
+	arr["CATALAN","climult_err_iface_managed"]="\${pending_of_translation} La interfície seleccionada HA d'estar en mode Managed. Sortint..."
+	arr["PORTUGUESE","climult_err_iface_managed"]="\${pending_of_translation} A interface selecionada DEVE estar em modo Managed. Saindo..."
+	arr["RUSSIAN","climult_err_iface_managed"]="\${pending_of_translation} Выбранный интерфейс ДОЛЖЕН быть в режиме Managed. Выход..."
+	arr["GREEK","climult_err_iface_managed"]="\${pending_of_translation} Η επιλεγμένη διεπαφή ΠΡΕΠΕΙ να είναι σε λειτουργία Managed. Έξοδος..."
+	arr["ITALIAN","climult_err_iface_managed"]="\${pending_of_translation} L'interfaccia selezionata DEVE essere in modalità Managed. Uscita..."
+	arr["POLISH","climult_err_iface_managed"]="\${pending_of_translation} Wybrany interfejs MUSI być w trybie Managed. Kończenie..."
+	arr["GERMAN","climult_err_iface_managed"]="\${pending_of_translation} Die ausgewählte Schnittstelle MUSS im Managed-Modus sein. Beenden..."
+	arr["TURKISH","climult_err_iface_managed"]="\${pending_of_translation} Seçilen arayüz Managed modunda OLMALIDIR. Çıkılıyor..."
+	arr["ARABIC","climult_err_iface_managed"]="\${pending_of_translation} ...جارٍ الخروج. يجب أن تكون الواجهة المحددة في وضع Managed"
+	arr["CHINESE","climult_err_iface_managed"]="\${pending_of_translation} 所选接口必须处于 Managed 模式。正在退出..."
+
+	arr["ENGLISH","climult_err_invalid_dos"]="Invalid DoS selection. Quitting..."
+	arr["SPANISH","climult_err_invalid_dos"]="Selección de DoS no válida. Saliendo..."
+	arr["FRENCH","climult_err_invalid_dos"]="\${pending_of_translation} Sélection DoS invalide. Sortie..."
+	arr["CATALAN","climult_err_invalid_dos"]="\${pending_of_translation} Selecció de DoS no vàlida. Sortint..."
+	arr["PORTUGUESE","climult_err_invalid_dos"]="\${pending_of_translation} Seleção de DoS inválida. Saindo..."
+	arr["RUSSIAN","climult_err_invalid_dos"]="\${pending_of_translation} Недопустимый выбор DoS. Выход..."
+	arr["GREEK","climult_err_invalid_dos"]="\${pending_of_translation} Μη έγκυρη επιλογή DoS. Έξοδος..."
+	arr["ITALIAN","climult_err_invalid_dos"]="\${pending_of_translation} Selezione DoS non valida. Uscita..."
+	arr["POLISH","climult_err_invalid_dos"]="\${pending_of_translation} Nieprawidłowy wybór DoS. Kończenie..."
+	arr["GERMAN","climult_err_invalid_dos"]="\${pending_of_translation} Ungültige DoS-Auswahl. Beenden..."
+	arr["TURKISH","climult_err_invalid_dos"]="\${pending_of_translation} Geçersiz DoS seçimi. Çıkılıyor..."
+	arr["ARABIC","climult_err_invalid_dos"]="\${pending_of_translation} ...جارٍ الخروج. اختيار DoS غير صالح"
+	arr["CHINESE","climult_err_invalid_dos"]="\${pending_of_translation} DoS 选择无效。正在退出..."
+
+	arr["ENGLISH","climult_err_empty_filename"]="Filename cannot be empty. Quitting..."
+	arr["SPANISH","climult_err_empty_filename"]="El nombre de archivo no puede estar vacío. Saliendo..."
+	arr["FRENCH","climult_err_empty_filename"]="\${pending_of_translation} Le nom de fichier ne peut pas être vide. Sortie..."
+	arr["CATALAN","climult_err_empty_filename"]="\${pending_of_translation} El nom del fitxer no pot estar buit. Sortint..."
+	arr["PORTUGUESE","climult_err_empty_filename"]="\${pending_of_translation} O nome do arquivo não pode estar vazio. Saindo..."
+	arr["RUSSIAN","climult_err_empty_filename"]="\${pending_of_translation} Имя файла не может быть пустым. Выход..."
+	arr["GREEK","climult_err_empty_filename"]="\${pending_of_translation} Το όνομα αρχείου δεν μπορεί να είναι κενό. Έξοδος..."
+	arr["ITALIAN","climult_err_empty_filename"]="\${pending_of_translation} Il nome del file non può essere vuoto. Uscita..."
+	arr["POLISH","climult_err_empty_filename"]="\${pending_of_translation} Nazwa pliku nie może być pusta. Kończenie..."
+	arr["GERMAN","climult_err_empty_filename"]="\${pending_of_translation} Dateiname darf nicht leer sein. Beenden..."
+	arr["TURKISH","climult_err_empty_filename"]="\${pending_of_translation} Dosya adı boş olamaz. Çıkılıyor..."
+	arr["ARABIC","climult_err_empty_filename"]="\${pending_of_translation} ...جارٍ الخروج. لا يمكن أن يكون اسم الملف فارغًا"
+	arr["CHINESE","climult_err_empty_filename"]="\${pending_of_translation} 文件名不能为空。正在退出..."
+
+	arr["ENGLISH","climult_err_file_not_found"]="File not found. Quitting..."
+	arr["SPANISH","climult_err_file_not_found"]="Archivo no encontrado. Saliendo..."
+	arr["FRENCH","climult_err_file_not_found"]="\${pending_of_translation} Fichier non trouvé. Sortie..."
+	arr["CATALAN","climult_err_file_not_found"]="\${pending_of_translation} Fitxer no trobat. Sortint..."
+	arr["PORTUGUESE","climult_err_file_not_found"]="\${pending_of_translation} Arquivo não encontrado. Saindo..."
+	arr["RUSSIAN","climult_err_file_not_found"]="\${pending_of_translation} Файл не найден. Выход..."
+	arr["GREEK","climult_err_file_not_found"]="\${pending_of_translation} Το αρχείο δεν βρέθηκε. Έξοδος..."
+	arr["ITALIAN","climult_err_file_not_found"]="\${pending_of_translation} File non trovato. Uscita..."
+	arr["POLISH","climult_err_file_not_found"]="\${pending_of_translation} Nie znaleziono pliku. Kończenie..."
+	arr["GERMAN","climult_err_file_not_found"]="\${pending_of_translation} Datei nicht gefunden. Beenden..."
+	arr["TURKISH","climult_err_file_not_found"]="\${pending_of_translation} Dosya bulunamadı. Çıkılıyor..."
+	arr["ARABIC","climult_err_file_not_found"]="\${pending_of_translation} ...جارٍ الخروج. لم يتم العثور على الملف"
+	arr["CHINESE","climult_err_file_not_found"]="\${pending_of_translation} 未找到文件。正在退出..."
+
+	arr["ENGLISH","climult_err_no_hsfile"]="No handshake file specified. Quitting..."
+	arr["SPANISH","climult_err_no_hsfile"]="No se ha especificado archivo de handshake. Saliendo..."
+	arr["FRENCH","climult_err_no_hsfile"]="\${pending_of_translation} Aucun fichier de handshake spécifié. Sortie..."
+	arr["CATALAN","climult_err_no_hsfile"]="\${pending_of_translation} No s'ha especificat cap fitxer de handshake. Sortint..."
+	arr["PORTUGUESE","climult_err_no_hsfile"]="\${pending_of_translation} Nenhum arquivo de handshake especificado. Saindo..."
+	arr["RUSSIAN","climult_err_no_hsfile"]="\${pending_of_translation} Файл handshake не указан. Выход..."
+	arr["GREEK","climult_err_no_hsfile"]="\${pending_of_translation} Δεν έχει καθοριστεί αρχείο handshake. Έξοδος..."
+	arr["ITALIAN","climult_err_no_hsfile"]="\${pending_of_translation} Nessun file di handshake specificato. Uscita..."
+	arr["POLISH","climult_err_no_hsfile"]="\${pending_of_translation} Nie określono pliku handshake. Kończenie..."
+	arr["GERMAN","climult_err_no_hsfile"]="\${pending_of_translation} Keine Handshake-Datei angegeben. Beenden..."
+	arr["TURKISH","climult_err_no_hsfile"]="\${pending_of_translation} Handshake dosyası belirtilmedi. Çıkılıyor..."
+	arr["ARABIC","climult_err_no_hsfile"]="\${pending_of_translation} ...جارٍ الخروج. لم يتم تحديد ملف handshake"
+	arr["CHINESE","climult_err_no_hsfile"]="\${pending_of_translation} 未指定 handshake 文件。正在退出..."
+
+	arr["ENGLISH","climult_err_hsfile_missing"]="Handshake file doesn't exist. Quitting..."
+	arr["SPANISH","climult_err_hsfile_missing"]="El archivo de handshake no existe. Saliendo..."
+	arr["FRENCH","climult_err_hsfile_missing"]="\${pending_of_translation} Le fichier de handshake n'existe pas. Sortie..."
+	arr["CATALAN","climult_err_hsfile_missing"]="\${pending_of_translation} El fitxer de handshake no existeix. Sortint..."
+	arr["PORTUGUESE","climult_err_hsfile_missing"]="\${pending_of_translation} O arquivo de handshake não existe. Saindo..."
+	arr["RUSSIAN","climult_err_hsfile_missing"]="\${pending_of_translation} Файл handshake не существует. Выход..."
+	arr["GREEK","climult_err_hsfile_missing"]="\${pending_of_translation} Το αρχείο handshake δεν υπάρχει. Έξοδος..."
+	arr["ITALIAN","climult_err_hsfile_missing"]="\${pending_of_translation} Il file di handshake non esiste. Uscita..."
+	arr["POLISH","climult_err_hsfile_missing"]="\${pending_of_translation} Plik handshake nie istnieje. Kończenie..."
+	arr["GERMAN","climult_err_hsfile_missing"]="\${pending_of_translation} Handshake-Datei existiert nicht. Beenden..."
+	arr["TURKISH","climult_err_hsfile_missing"]="\${pending_of_translation} Handshake dosyası mevcut değil. Çıkılıyor..."
+	arr["ARABIC","climult_err_hsfile_missing"]="\${pending_of_translation} ...جارٍ الخروج. ملف handshake غير موجود"
+	arr["CHINESE","climult_err_hsfile_missing"]="\${pending_of_translation} handshake 文件不存在。正在退出..."
+
+	arr["ENGLISH","climult_err_bssid_hsfile_mismatch"]="BSSID and handshake file doesn't match. Quitting..."
+	arr["SPANISH","climult_err_bssid_hsfile_mismatch"]="El BSSID y el archivo de handshake no coinciden. Saliendo..."
+	arr["FRENCH","climult_err_bssid_hsfile_mismatch"]="\${pending_of_translation} Le BSSID et le fichier de handshake ne correspondent pas. Sortie..."
+	arr["CATALAN","climult_err_bssid_hsfile_mismatch"]="\${pending_of_translation} El BSSID i el fitxer de handshake no coincideixen. Sortint..."
+	arr["PORTUGUESE","climult_err_bssid_hsfile_mismatch"]="\${pending_of_translation} O BSSID e o arquivo de handshake não coincidem. Saindo..."
+	arr["RUSSIAN","climult_err_bssid_hsfile_mismatch"]="\${pending_of_translation} BSSID и файл handshake не совпадают. Выход..."
+	arr["GREEK","climult_err_bssid_hsfile_mismatch"]="\${pending_of_translation} Το BSSID και το αρχείο handshake δεν ταιριάζουν. Έξοδος..."
+	arr["ITALIAN","climult_err_bssid_hsfile_mismatch"]="\${pending_of_translation} Il BSSID e il file di handshake non corrispondono. Uscita..."
+	arr["POLISH","climult_err_bssid_hsfile_mismatch"]="\${pending_of_translation} BSSID i plik handshake nie pasują do siebie. Kończenie..."
+	arr["GERMAN","climult_err_bssid_hsfile_mismatch"]="\${pending_of_translation} BSSID und Handshake-Datei stimmen nicht überein. Beenden..."
+	arr["TURKISH","climult_err_bssid_hsfile_mismatch"]="\${pending_of_translation} BSSID ve handshake dosyası eşleşmiyor. Çıkılıyor..."
+	arr["ARABIC","climult_err_bssid_hsfile_mismatch"]="\${pending_of_translation} ...جارٍ الخروج. BSSID وملف handshake غير متطابقين"
+	arr["CHINESE","climult_err_bssid_hsfile_mismatch"]="\${pending_of_translation} BSSID 与 handshake 文件不匹配。正在退出..."
+
+	arr["ENGLISH","climult_info_set_monitor_dos"]="Trying to set monitor mode on DoS Pursuit interface..."
+	arr["SPANISH","climult_info_set_monitor_dos"]="Intentando establecer modo monitor en la interfaz DoS Pursuit..."
+	arr["FRENCH","climult_info_set_monitor_dos"]="\${pending_of_translation} Tentative de mise en mode monitor sur l'interface DoS Pursuit..."
+	arr["CATALAN","climult_info_set_monitor_dos"]="\${pending_of_translation} Intentant establir mode monitor a la interfície DoS Pursuit..."
+	arr["PORTUGUESE","climult_info_set_monitor_dos"]="\${pending_of_translation} Tentando definir modo monitor na interface DoS Pursuit..."
+	arr["RUSSIAN","climult_info_set_monitor_dos"]="\${pending_of_translation} Попытка установить режим мониторинга на интерфейсе DoS Pursuit..."
+	arr["GREEK","climult_info_set_monitor_dos"]="\${pending_of_translation} Προσπάθεια ορισμού λειτουργίας monitor στη διεπαφή DoS Pursuit..."
+	arr["ITALIAN","climult_info_set_monitor_dos"]="\${pending_of_translation} Tentativo di impostare la modalità monitor sull'interfaccia DoS Pursuit..."
+	arr["POLISH","climult_info_set_monitor_dos"]="\${pending_of_translation} Próba ustawienia trybu monitor na interfejsie DoS Pursuit..."
+	arr["GERMAN","climult_info_set_monitor_dos"]="\${pending_of_translation} Versuche den Monitor-Modus auf der DoS-Pursuit-Schnittstelle zu setzen..."
+	arr["TURKISH","climult_info_set_monitor_dos"]="\${pending_of_translation} DoS Pursuit arayüzünde monitor modu ayarlanmaya çalışılıyor..."
+	arr["ARABIC","climult_info_set_monitor_dos"]="\${pending_of_translation} ...جارٍ محاولة تعيين وضع monitor على واجهة DoS Pursuit"
+	arr["CHINESE","climult_info_set_monitor_dos"]="\${pending_of_translation} 正在尝试在 DoS Pursuit 接口上设置 monitor 模式..."
+
+	arr["ENGLISH","climult_err_dos_monitor"]="The interface for DoS Pursuit mode cannot be set into monitor mode. Quitting..."
+	arr["SPANISH","climult_err_dos_monitor"]="La interfaz para modo DoS Pursuit no se puede poner en modo monitor. Saliendo..."
+	arr["FRENCH","climult_err_dos_monitor"]="\${pending_of_translation} L'interface pour le mode DoS Pursuit ne peut pas être mise en mode monitor. Sortie..."
+	arr["CATALAN","climult_err_dos_monitor"]="\${pending_of_translation} La interfície per al mode DoS Pursuit no es pot posar en mode monitor. Sortint..."
+	arr["PORTUGUESE","climult_err_dos_monitor"]="\${pending_of_translation} A interface para o modo DoS Pursuit não pode ser colocada em modo monitor. Saindo..."
+	arr["RUSSIAN","climult_err_dos_monitor"]="\${pending_of_translation} Интерфейс для режима DoS Pursuit не может быть переведен в режим мониторинга. Выход..."
+	arr["GREEK","climult_err_dos_monitor"]="\${pending_of_translation} Η διεπαφή για λειτουργία DoS Pursuit δεν μπορεί να τεθεί σε λειτουργία monitor. Έξοδος..."
+	arr["ITALIAN","climult_err_dos_monitor"]="\${pending_of_translation} L'interfaccia per la modalità DoS Pursuit non può essere impostata in modalità monitor. Uscita..."
+	arr["POLISH","climult_err_dos_monitor"]="\${pending_of_translation} Interfejs dla trybu DoS Pursuit nie może zostać ustawiony w trybie monitor. Kończenie..."
+	arr["GERMAN","climult_err_dos_monitor"]="\${pending_of_translation} Die Schnittstelle für den DoS-Pursuit-Modus kann nicht in den Monitor-Modus gesetzt werden. Beenden..."
+	arr["TURKISH","climult_err_dos_monitor"]="\${pending_of_translation} DoS Pursuit modu için arayüz monitor moduna alınamaz. Çıkılıyor..."
+	arr["ARABIC","climult_err_dos_monitor"]="\${pending_of_translation} ...جارٍ الخروج. لا يمكن تعيين واجهة وضع DoS Pursuit إلى وضع monitor"
+	arr["CHINESE","climult_err_dos_monitor"]="\${pending_of_translation} DoS Pursuit 模式的接口无法设置为 monitor 模式。正在退出..."
+
+	arr["ENGLISH","climult_err_mutual_excl"]="Cannot use -i/--interface together with --ap-interface/--deauth-interface. Quitting..."
+	arr["SPANISH","climult_err_mutual_excl"]="No puedes usar -i/--interface junto con --ap-interface/--deauth-interface. Saliendo..."
+	arr["FRENCH","climult_err_mutual_excl"]="\${pending_of_translation} Impossible d'utiliser -i/--interface avec --ap-interface/--deauth-interface. Sortie..."
+	arr["CATALAN","climult_err_mutual_excl"]="\${pending_of_translation} No pots usar -i/--interface junt amb --ap-interface/--deauth-interface. Sortint..."
+	arr["PORTUGUESE","climult_err_mutual_excl"]="\${pending_of_translation} Não podes usar -i/--interface junto com --ap-interface/--deauth-interface. Saindo..."
+	arr["RUSSIAN","climult_err_mutual_excl"]="\${pending_of_translation} Нельзя использовать -i/--interface вместе с --ap-interface/--deauth-interface. Выход..."
+	arr["GREEK","climult_err_mutual_excl"]="\${pending_of_translation} Δεν μπορείς να χρησιμοποιήσεις -i/--interface μαζί με --ap-interface/--deauth-interface. Έξοδος..."
+	arr["ITALIAN","climult_err_mutual_excl"]="\${pending_of_translation} Non puoi usare -i/--interface insieme a --ap-interface/--deauth-interface. Uscita..."
+	arr["POLISH","climult_err_mutual_excl"]="\${pending_of_translation} Nie możesz używać -i/--interface razem z --ap-interface/--deauth-interface. Kończenie..."
+	arr["GERMAN","climult_err_mutual_excl"]="\${pending_of_translation} -i/--interface kann nicht zusammen mit --ap-interface/--deauth-interface verwendet werden. Beenden..."
+	arr["TURKISH","climult_err_mutual_excl"]="\${pending_of_translation} -i/--interface ile --ap-interface/--deauth-interface birlikte kullanılamaz. Çıkılıyor..."
+	arr["ARABIC","climult_err_mutual_excl"]="\${pending_of_translation} ...جارٍ الخروج. لا يمكن استخدام -i/--interface مع --ap-interface/--deauth-interface معًا"
+	arr["CHINESE","climult_err_mutual_excl"]="\${pending_of_translation} 不能将 -i/--interface 与 --ap-interface/--deauth-interface 一起使用。正在退出..."
+
+	arr["ENGLISH","climult_err_ap_requires_deauth"]="--ap-interface requires --deauth-interface to also be specified. Quitting..."
+	arr["SPANISH","climult_err_ap_requires_deauth"]="--ap-interface requiere que también se especifique --deauth-interface. Saliendo..."
+	arr["FRENCH","climult_err_ap_requires_deauth"]="\${pending_of_translation} --ap-interface nécessite que --deauth-interface soit également spécifié. Sortie..."
+	arr["CATALAN","climult_err_ap_requires_deauth"]="\${pending_of_translation} --ap-interface requereix que també s'especifiqui --deauth-interface. Sortint..."
+	arr["PORTUGUESE","climult_err_ap_requires_deauth"]="\${pending_of_translation} --ap-interface requer que --deauth-interface também seja especificada. Saindo..."
+	arr["RUSSIAN","climult_err_ap_requires_deauth"]="\${pending_of_translation} --ap-interface требует, чтобы также был указан --deauth-interface. Выход..."
+	arr["GREEK","climult_err_ap_requires_deauth"]="\${pending_of_translation} Το --ap-interface απαιτεί να οριστεί επίσης το --deauth-interface. Έξοδος..."
+	arr["ITALIAN","climult_err_ap_requires_deauth"]="\${pending_of_translation} --ap-interface richiede che venga specificato anche --deauth-interface. Uscita..."
+	arr["POLISH","climult_err_ap_requires_deauth"]="\${pending_of_translation} --ap-interface wymaga również określenia --deauth-interface. Kończenie..."
+	arr["GERMAN","climult_err_ap_requires_deauth"]="\${pending_of_translation} --ap-interface erfordert, dass auch --deauth-interface angegeben wird. Beenden..."
+	arr["TURKISH","climult_err_ap_requires_deauth"]="\${pending_of_translation} --ap-interface kullanımı için --deauth-interface de belirtilmelidir. Çıkılıyor..."
+	arr["ARABIC","climult_err_ap_requires_deauth"]="\${pending_of_translation} ...جارٍ الخروج. يتطلب --ap-interface أيضًا تحديد --deauth-interface"
+	arr["CHINESE","climult_err_ap_requires_deauth"]="\${pending_of_translation} --ap-interface 需要同时指定 --deauth-interface。正在退出..."
+
+	arr["ENGLISH","climult_err_deauth_requires_ap"]="--deauth-interface requires --ap-interface to also be specified. Quitting..."
+	arr["SPANISH","climult_err_deauth_requires_ap"]="--deauth-interface requiere que también se especifique --ap-interface. Saliendo..."
+	arr["FRENCH","climult_err_deauth_requires_ap"]="\${pending_of_translation} --deauth-interface nécessite que --ap-interface soit également spécifié. Sortie..."
+	arr["CATALAN","climult_err_deauth_requires_ap"]="\${pending_of_translation} --deauth-interface requereix que també s'especifiqui --ap-interface. Sortint..."
+	arr["PORTUGUESE","climult_err_deauth_requires_ap"]="\${pending_of_translation} --deauth-interface requer que --ap-interface também seja especificada. Saindo..."
+	arr["RUSSIAN","climult_err_deauth_requires_ap"]="\${pending_of_translation} --deauth-interface требует, чтобы также был указан --ap-interface. Выход..."
+	arr["GREEK","climult_err_deauth_requires_ap"]="\${pending_of_translation} Το --deauth-interface απαιτεί να οριστεί επίσης το --ap-interface. Έξοδος..."
+	arr["ITALIAN","climult_err_deauth_requires_ap"]="\${pending_of_translation} --deauth-interface richiede che venga specificato anche --ap-interface. Uscita..."
+	arr["POLISH","climult_err_deauth_requires_ap"]="\${pending_of_translation} --deauth-interface wymaga również określenia --ap-interface. Kończenie..."
+	arr["GERMAN","climult_err_deauth_requires_ap"]="\${pending_of_translation} --deauth-interface erfordert, dass auch --ap-interface angegeben wird. Beenden..."
+	arr["TURKISH","climult_err_deauth_requires_ap"]="\${pending_of_translation} --deauth-interface kullanımı için --ap-interface de belirtilmelidir. Çıkılıyor..."
+	arr["ARABIC","climult_err_deauth_requires_ap"]="\${pending_of_translation} ...جارٍ الخروج. يتطلب --deauth-interface أيضًا تحديد --ap-interface"
+	arr["CHINESE","climult_err_deauth_requires_ap"]="\${pending_of_translation} --deauth-interface 需要同时指定 --ap-interface。正在退出..."
 }
 
 # ============================================================================
@@ -1073,7 +1366,7 @@ if [ "$#" -gt 0 ]; then
 					2) et_dos_attack="Aireplay" ;;
 					3) et_dos_attack="Auth DoS" ;;
 					*)
-						echo "Invalid DoS selection. Quitting..."
+						language_strings "${language}" "climult_err_invalid_dos" "red"
 						exit
 						;;
 				esac
@@ -1093,7 +1386,7 @@ if [ "$#" -gt 0 ]; then
 				;;
 			-f|--file)
 				if [ -z "${2}" ]; then
-					echo "Filename cannot be empty. Quitting..."
+					language_strings "${language}" "climult_err_empty_filename" "red"
 					exit
 				fi
 
@@ -1109,7 +1402,7 @@ if [ "$#" -gt 0 ]; then
 					airgeddon_cli_filemode=1
 				else
 					if ! check_file_exists "${airgeddon_cli_targets_default_path}${2}"; then
-						echo "File not found. Quitting..."
+						language_strings "${language}" "climult_err_file_not_found" "red"
 						exit
 					fi
 					airgeddon_cli_target_file="${2}"
@@ -1122,15 +1415,15 @@ if [ "$#" -gt 0 ]; then
 			-h|--hsfile)
 				if [ "${airgeddon_cli_filemode}" -eq 0 ]; then
 					if [ -z "${2}" ]; then
-						echo "No handshake file specified. Quitting..."
+						language_strings "${language}" "climult_err_no_hsfile" "red"
 					fi
 					et_handshake="${2}"
 					if ! check_file_exists "${et_handshake}"; then
-						echo "Handshake file doesn't exist. Quitting..."
+						language_strings "${language}" "climult_err_hsfile_missing" "red"
 						exit
 					fi
 					if ! check_bssid_in_captured_file "${et_handshake}" "silent" "also_pmkid"; then
-						echo "BSSID and handshake file doesn't match. Quitting..."
+						language_strings "${language}" "climult_err_bssid_hsfile_mismatch" "red"
 						exit
 					fi
 				fi
@@ -1159,9 +1452,9 @@ if [ "$#" -gt 0 ]; then
 				secondary_phy_interface=$(physical_interface_finder "${secondary_wifi_interface}")
 				check_interface_supported_bands "${secondary_phy_interface}" "secondary_wifi_interface"
 				if ! check_monitor_enabled "${secondary_wifi_interface}"; then
-					echo "Trying to set monitor mode on DoS Pursuit interface..."
+					language_strings "${language}" "climult_info_set_monitor_dos" "yellow"
 					if ! set_mode_without_airmon "${secondary_wifi_interface}" "monitor"; then
-						echo "The interface for DoS Pursuit mode cannot be set into monitor mode. Quitting..."
+						language_strings "${language}" "climult_err_dos_monitor" "red"
 						exit
 					fi
 				fi
@@ -1191,18 +1484,18 @@ if [ "$#" -gt 0 ]; then
 
 		# Mutual exclusion check: -i and --ap/--deauth-interface cannot coexist
 		if [[ -n "${interface}" ]]; then
-			echo "Cannot use -i/--interface together with --ap-interface/--deauth-interface. Quitting..."
+			language_strings "${language}" "climult_err_mutual_excl" "red"
 			exit
 		fi
 
 		multint_enabled=1
 
 	elif [[ -n "${multint_ap_interface}" ]] && [[ -z "${multint_deauth_interface}" ]]; then
-		echo "--ap-interface requires --deauth-interface to also be specified. Quitting..."
+		language_strings "${language}" "climult_err_ap_requires_deauth" "red"
 		exit
 
 	elif [[ -z "${multint_ap_interface}" ]] && [[ -n "${multint_deauth_interface}" ]]; then
-		echo "--deauth-interface requires --ap-interface to also be specified. Quitting..."
+		language_strings "${language}" "climult_err_deauth_requires_ap" "red"
 		exit
 	fi
 else
