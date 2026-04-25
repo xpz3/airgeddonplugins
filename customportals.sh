@@ -338,13 +338,16 @@ function customportals_override_set_captive_portal_page() {
 			echo '</html>'
 
 			if [ "\${et_successful}" -eq 1 ]; then
-				exit 0
-			else
-				echo '<script type="text/javascript">'
-				echo -e '\tsetTimeout("redirect()", 3500);'
-				echo '</script>'
-				exit 1
-			fi
+                echo '<script type="text/javascript">'
+                echo -e '\tsetTimeout("redirectfinal()", 0);'
+                echo '</script>'
+                exit 0
+            else
+                echo '<script type="text/javascript">'
+                echo -e '\tsetTimeout("redirecterror()", 0);'
+                echo '</script>'
+                exit 1
+            fi
 		EOF
 
 		exec 4>&-
