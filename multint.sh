@@ -15,7 +15,7 @@ plugin_enabled=1
 ###### PLUGIN REQUIREMENTS ######
 
 #Set airgeddon versions to apply this plugin (leave blank to set no limits, minimum version recommended is 10.0 on which plugins feature was added)
-plugin_minimum_ag_affected_version="11.50"
+plugin_minimum_ag_affected_version="12.0"
 plugin_maximum_ag_affected_version=""
 
 #Set only one element in the array "*" to affect all distros, otherwise add them one by one with the name which airgeddon uses for that distro (examples "BlackArch", "Parrot", "Kali")
@@ -26,6 +26,14 @@ function multint_override_select_interface() {
 	debug_print
 
 	local interface_menu_band
+	local interface_menu_standard
+	local menu_phy_interface
+	local prev_standard_80211n
+	local prev_standard_80211ac
+	local prev_standard_80211ax
+	local prev_standard_80211be
+	local prev_wifi_standard_short
+	local prev_6ghz_allowed
 	local multintcounter=0
 	multint_enabled=1
 
@@ -54,6 +62,7 @@ function multint_override_select_interface() {
 				language_strings "${language}" 245 "blue"
 			else
 				interface_menu_band=""
+				interface_menu_standard=""
 				if check_interface_wifi "${item}"; then
 					interface_menu_band+="${blue_color}// ${pink_color}"
 					get_5ghz_band_info_from_phy_interface "$(physical_interface_finder "${item}")"
@@ -65,12 +74,42 @@ function multint_override_select_interface() {
 							interface_menu_band+="${band_24ghz}, ${band_5ghz}"
 						;;
 					esac
+					get_6ghz_band_info_from_phy_interface "$(physical_interface_finder "${item}")"
+					if [ "$?" -ne 1 ]; then
+						interface_menu_band+=", ${band_6ghz}"
+					fi
+
+					menu_phy_interface=$(physical_interface_finder "${item}")
+					if [ -n "${menu_phy_interface}" ]; then
+						prev_standard_80211n=${standard_80211n}
+						prev_standard_80211ac=${standard_80211ac}
+						prev_standard_80211ax=${standard_80211ax}
+						prev_standard_80211be=${standard_80211be}
+						prev_wifi_standard_short=${wifi_standard_short}
+						prev_6ghz_allowed=${interfaces_band_info['main_wifi_interface','6Ghz_allowed']}
+
+						get_6ghz_band_info_from_phy_interface "${menu_phy_interface}"
+						if [ "$?" -eq 0 ]; then
+							interfaces_band_info['main_wifi_interface','6Ghz_allowed']=1
+						else
+							interfaces_band_info['main_wifi_interface','6Ghz_allowed']=0
+						fi
+						check_supported_standards "${menu_phy_interface}"
+						interface_menu_standard="${wifi_standard_short}"
+
+						standard_80211n=${prev_standard_80211n}
+						standard_80211ac=${prev_standard_80211ac}
+						standard_80211ax=${prev_standard_80211ax}
+						standard_80211be=${prev_standard_80211be}
+						wifi_standard_short=${prev_wifi_standard_short}
+						interfaces_band_info['main_wifi_interface','6Ghz_allowed']=${prev_6ghz_allowed}
+					fi
 				fi
 
 				if [ "${is_rtl_language}" -eq 1 ]; then
-					echo -e "${interface_menu_band} ${blue_color}// ${normal_color}${chipset} ${yellow_color}:Chipset${normal_color}"
+					echo -e "${interface_menu_band} ${brown_color}${interface_menu_standard}${normal_color} ${blue_color}// ${normal_color}${chipset} ${yellow_color}:Chipset${normal_color}"
 				else
-					echo -e "${interface_menu_band} ${blue_color}// ${yellow_color}Chipset:${normal_color} ${chipset}"
+					echo -e "${interface_menu_band} ${brown_color}${interface_menu_standard}${normal_color} ${blue_color}// ${yellow_color}Chipset:${normal_color} ${chipset}"
 				fi
 			fi
 		done
@@ -201,7 +240,7 @@ function multint_override_restore_et_interface() {
 	debug_print
 
 	if [ "${multint_enabled}" -eq 1 ]; then
-	
+
 		interface="${multint_deauth_interface}"
 		set_mode_without_airmon "${multint_ap_interface}" "managed"
 		ifacemode="Monitor"
@@ -266,6 +305,10 @@ function multint_override_select_secondary_interface() {
 		return 1
 	fi
 
+	if [ "${return_to_wpa3_main_menu}" -eq 1 ]; then
+		return 1
+	fi
+
 	clear
 	if [ -n "${enterprise_mode}" ]; then
 		current_menu="enterprise_attacks_menu"
@@ -277,6 +320,8 @@ function multint_override_select_secondary_interface() {
 				language_strings "${language}" 523 "title"
 			;;
 		esac
+	elif [ "${FUNCNAME[6]}" = "hookable_wpa3_attacks_menu" ]; then
+		current_menu="wpa3_attacks_menu"
 	elif [[ -z "${enterprise_mode}" ]] && [[ -z "${et_mode}" ]]; then
 		current_menu="dos_attacks_menu"
 	elif [[ -z "${enterprise_mode}" ]] && [[ -n "${et_mode}" ]]; then
@@ -300,7 +345,7 @@ function multint_override_select_secondary_interface() {
 		esac
 	fi
 
-	if [ "${1}" = "dos_pursuit_mode" ]; then
+	if [[ "${1}" = "dos_pursuit_mode" ]] || [[ "${1}" = "secondary_interface" ]]; then
 		if [ "${multint_enabled}" -eq 1 ]; then
 			readarray -t secondary_ifaces < <(iw dev | grep "Interface" | awk '{print $2}' | grep "${interface}" -v | grep "${multint_ap_interface}" -v)
 		else
@@ -323,7 +368,7 @@ function multint_override_select_secondary_interface() {
 	fi
 
 	if [ ${#secondary_ifaces[@]} -eq 1 ]; then
-		if [ "${1}" = "dos_pursuit_mode" ]; then
+		if [[ "${1}" = "dos_pursuit_mode" ]] || [[ "${1}" = "secondary_interface" ]]; then
 			secondary_wifi_interface="${secondary_ifaces[0]}"
 			secondary_phy_interface=$(physical_interface_finder "${secondary_wifi_interface}")
 			check_interface_supported_bands "${secondary_phy_interface}" "secondary_wifi_interface"
@@ -340,7 +385,7 @@ function multint_override_select_secondary_interface() {
 	option_counter=0
 	for item in "${secondary_ifaces[@]}"; do
 		if [ "${option_counter}" -eq 0 ]; then
-			if [ "${1}" = "dos_pursuit_mode" ]; then
+			if [[ "${1}" = "dos_pursuit_mode" ]] || [[ "${1}" = "secondary_interface" ]]; then
 				echo
 				language_strings "${language}" 511 "green"
 			elif [ "${1}" = "internet" ]; then
@@ -350,6 +395,8 @@ function multint_override_select_secondary_interface() {
 			print_simple_separator
 			if [ -n "${enterprise_mode}" ]; then
 				language_strings "${language}" 521
+			elif [ "${FUNCNAME[6]}" = "hookable_wpa3_attacks_menu" ]; then
+				language_strings "${language}" 776
 			else
 				language_strings "${language}" 266
 			fi
@@ -381,10 +428,12 @@ function multint_override_select_secondary_interface() {
 		elif [[ -z "${enterprise_mode}" ]] && [[ -n "${et_mode}" ]]; then
 			return_to_et_main_menu=1
 			return_to_et_main_menu_from_beef=1
+		elif [ "${FUNCNAME[6]}" = "hookable_wpa3_attacks_menu" ]; then
+			return_to_wpa3_main_menu=1
 		fi
 
 		echo
-		if [ "${1}" = "dos_pursuit_mode" ]; then
+		if [[ "${1}" = "dos_pursuit_mode" ]] || [[ "${1}" = "secondary_interface" ]]; then
 			language_strings "${language}" 510 "red"
 		elif [ "${1}" = "internet" ]; then
 			language_strings "${language}" 280 "red"
@@ -405,10 +454,12 @@ function multint_override_select_secondary_interface() {
 		elif [[ -z "${enterprise_mode}" ]] && [[ -n "${et_mode}" ]]; then
 			return_to_et_main_menu=1
 			return_to_et_main_menu_from_beef=1
+		elif [ "${FUNCNAME[6]}" = "hookable_wpa3_attacks_menu" ]; then
+			return_to_wpa3_main_menu=1
 		fi
 		return 1
 	elif [[ ! ${secondary_iface} =~ ^[[:digit:]]+$ ]] || ((secondary_iface < 1 || secondary_iface > option_counter)); then
-		if [ "${1}" = "dos_pursuit_mode" ]; then
+		if [[ "${1}" = "dos_pursuit_mode" ]] || [[ "${1}" = "secondary_interface" ]]; then
 			invalid_secondary_iface_selected "dos_pursuit_mode"
 		else
 			invalid_secondary_iface_selected "internet"
@@ -418,7 +469,7 @@ function multint_override_select_secondary_interface() {
 		for item2 in "${secondary_ifaces[@]}"; do
 			option_counter2=$((option_counter2 + 1))
 			if [ "${secondary_iface}" = "${option_counter2}" ]; then
-				if [ "${1}" = "dos_pursuit_mode" ]; then
+				if [[ "${1}" = "dos_pursuit_mode" ]] || [[ "${1}" = "secondary_interface" ]]; then
 					secondary_wifi_interface=${item2}
 					secondary_phy_interface=$(physical_interface_finder "${secondary_wifi_interface}")
 					check_interface_supported_bands "${secondary_phy_interface}" "secondary_wifi_interface"

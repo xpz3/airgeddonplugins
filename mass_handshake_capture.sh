@@ -10,7 +10,7 @@ plugin_author="xpz3"
 #Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="11.60"
+plugin_minimum_ag_affected_version="12.0"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -22,7 +22,7 @@ mass_handshake_capture_dos_attack_timeout=15
 
 #The time in seconds to wait for capturing a handshake after the DoS attack windows gets automatically closed by airgeddon
 handshake_capture_timeout_after_dos_exits=10
- 
+
 timeout_capture_handshake_decloak="${handshake_capture_timeout_after_dos_exits}"
 timeout="${timeout_capture_handshake_decloak}"
 
@@ -158,13 +158,8 @@ function mass_handshake_capture_capture_pmkid_handshake() {
 		return 1
 	fi
 
-	if [ "${channel}" -gt 14 ]; then
-		if [ "${interfaces_band_info['main_wifi_interface','5Ghz_allowed']}" -eq 0 ]; then
-			echo
-			language_strings "${language}" 515 "red"
-			language_strings "${language}" 115 "read"
-			return 1
-		fi
+	if ! check_target_band_supported_by_interface; then
+		return 1
 	fi
 
 	if ! validate_network_encryption_type "WPA"; then
@@ -500,13 +495,16 @@ function mass_handshake_capture() {
 	else
 		mass_handshake_capture_absolute_script_path="${scriptfolder}"
 	fi
+
 	if [ -z "${mass_handshake_capture_default_save_path}" ];then
 		mass_handshake_capture_default_save_path="${mass_handshake_capture_absolute_script_path}"plugins/captured_handshakes/
 		mass_handshake_capture_default_blacklist_path="${mass_handshake_capture_default_save_path}"
 	fi
+
 	if [ -z "${mass_handshake_capture_default_blacklist_path}" ];then
 		mass_handshake_capture_default_blacklist_path="${mass_handshake_capture_default_save_path}"
 	fi
+
 	if [ -z "${mass_handshake_capture_ap_details_path}" ];then
 		mass_handshake_capture_ap_details_path="${mass_handshake_capture_default_save_path}"targets/
 	fi
@@ -514,6 +512,23 @@ function mass_handshake_capture() {
 	if [ ! -d "${mass_handshake_capture_default_save_path}" ]; then
 		mkdir "${mass_handshake_capture_default_save_path}"
 	fi
+
+	if [ "${mass_handshake_capture_save_target}" -eq 1 ]; then
+		if [ ! -d "${mass_handshake_capture_ap_details_path}" ]; then
+			mkdir -p "${mass_handshake_capture_ap_details_path}"
+		fi
+	fi
+
+	if [ "${mass_handshake_capture_enable_blacklist}" -eq 1 ];then
+		mass_handshake_capture_blacklist_file="${mass_handshake_capture_default_blacklist_path}${mass_handshake_capture_ap_blacklist_name}"
+		if [ ! -f "${mass_handshake_capture_blacklist_file}" ]; then
+			echo
+			language_strings "${language}" "mass_handshake_capture_text_5" "yellow"
+			language_strings "${language}" 115 "read"
+			mass_handshake_capture_enable_blacklist=0
+		fi
+	fi
+
 	mass_handshake_capture_captured_handshakes_counter=0
 	mass_handshake_capture_grab_wpa_targets "WPA" "personal"
 
@@ -521,6 +536,7 @@ function mass_handshake_capture() {
 	channel=""
 	bssid=""
 	enc=""
+	target_band_id=""
 	personal_network_selected=0
 	enterprise_network_selected=0
 	network_names=()
@@ -674,9 +690,10 @@ function mass_handshake_capture_grab_wpa_targets() {
 
 	sort -t "," -d -k 3 "${tmpdir}nws.txt" > "${tmpdir}wnws.txt"
 	grep -v "Hidden" "${tmpdir}wnws.txt" > "${tmpdir}wnws1.txt" && mv "${tmpdir}wnws1.txt" "${tmpdir}wnws.txt"
-	if [ "${mass_handshake_capture_enable_blacklist}" -eq 1 ];then
+	if [ "${mass_handshake_capture_enable_blacklist}" -eq 1 ] && [ -f "${mass_handshake_capture_default_blacklist_path}${mass_handshake_capture_ap_blacklist_name}" ];then
 		grep -vFf "${mass_handshake_capture_default_blacklist_path}${mass_handshake_capture_ap_blacklist_name}" "${tmpdir}wnws.txt" >"${tmpdir}wnws2.txt" && mv "${tmpdir}wnws2.txt" "${tmpdir}wnws.txt"
 	fi
+
 	mass_handshake_capture_get_targets_count
 	mass_handshake_capture_automate
 }
@@ -780,6 +797,19 @@ function mass_handshake_capture_read_targets() {
 	channel=${channels[${mass_handshake_capture_target_counter}]}
 	bssid=${macs[${mass_handshake_capture_target_counter}]}
 	enc=${encs[${mass_handshake_capture_target_counter}]}
+	if [[ -n "${channel}" ]] && [[ "${channel}" =~ ^[0-9]+$ ]]; then
+		if [ "${channel}" -le 14 ]; then
+			target_band_id="${band_24ghz}"
+		elif [ "${interfaces_band_info['main_wifi_interface','6Ghz_allowed']}" -eq 1 ] && [ "${scan_6ghz_enabled}" != "0" ] && contains_element "${channel}" "${channels_5ghz_list[@]}" && contains_element "${channel}" "${channels_6ghz_list[@]}"; then
+			target_band_id="${band_5ghz}"
+		elif [ "${interfaces_band_info['main_wifi_interface','6Ghz_allowed']}" -eq 1 ] && [ "${scan_6ghz_enabled}" != "0" ] && [[ "${channel}" =~ ^${valid_channels_6_ghz_regexp}$ ]]; then
+			target_band_id="${band_6ghz}"
+		else
+			target_band_id="${band_5ghz}"
+		fi
+	else
+		target_band_id=""
+	fi
 
 	if [[ "${types[${mass_handshake_capture_target_counter}]}" =~ MGT ]] || [[ "${types[${mass_handshake_capture_target_counter}]}" =~ CMAC && ! "${types[${mass_handshake_capture_target_counter}]}" =~ PSK ]]; then
 		enterprise_network_selected=1
@@ -859,6 +889,20 @@ function mass_handshake_capture_prehook_hookable_for_languages() {
 	arr["TURKISH","mass_handshake_capture_text_4"]="\${pending_of_translation} Yakalanan \${mass_handshake_capture_captured_handshakes_counter} handshakes/PMKID itibaren \${mass_handshake_capture_targets_count} APs"
 	arr["ARABIC","mass_handshake_capture_text_4"]="\${pending_of_translation} التقاط \${mass_handshake_capture_captured_handshakes_counter} مصافحة/PMKID من \${mass_handshake_capture_targets_count} APs"
 	arr["CHINESE","mass_handshake_capture_text_4"]="\${pending_of_translation} 捕获\${mass_handshake_capture_captured_handshakes_counter}握手/PMKID 从\${mass_handshake_capture_targets_count} APs"
+
+	arr["ENGLISH","mass_handshake_capture_text_5"]="Warning. AP blacklist file not found. It will be ignored"
+	arr["SPANISH","mass_handshake_capture_text_5"]="Atención. Archivo de lista negra de AP no encontrado. Será ignorado"
+	arr["FRENCH","mass_handshake_capture_text_5"]="\${pending_of_translation} Avertissement. Fichier de liste noire d'AP introuvable. Il sera ignoré"
+	arr["CATALAN","mass_handshake_capture_text_5"]="\${pending_of_translation} Avís. Fitxer de llista negra d'AP no trobat. S'ignorarà"
+	arr["PORTUGUESE","mass_handshake_capture_text_5"]="\${pending_of_translation} Aviso. Arquivo de lista negra de AP não encontrado. Será ignorado"
+	arr["RUSSIAN","mass_handshake_capture_text_5"]="\${pending_of_translation} Предупреждение. Файл черного списка AP не найден. Он будет проигнорирован"
+	arr["GREEK","mass_handshake_capture_text_5"]="\${pending_of_translation} Προειδοποίηση. Το αρχείο μαύρης λίστας AP δεν βρέθηκε. Θα αγνοηθεί"
+	arr["ITALIAN","mass_handshake_capture_text_5"]="\${pending_of_translation} Avviso. File di blacklist AP non trovato. Verrà ignorato"
+	arr["POLISH","mass_handshake_capture_text_5"]="\${pending_of_translation} Ostrzeżenie. Nie znaleziono pliku czarnej listy AP. Zostanie zignorowany"
+	arr["GERMAN","mass_handshake_capture_text_5"]="\${pending_of_translation} Warnung. AP-Blacklist-Datei nicht gefunden. Sie wird ignoriert"
+	arr["TURKISH","mass_handshake_capture_text_5"]="\${pending_of_translation} Uyarı. AP kara liste dosyası bulunamadı. Yok sayılacak"
+	arr["ARABIC","mass_handshake_capture_text_5"]="\${pending_of_translation} تجاهله سيتم. موجود غير AP السوداء القائمة ملف. تحذير"
+	arr["CHINESE","mass_handshake_capture_text_5"]="\${pending_of_translation} 警告。未找到 AP 黑名单文件。它将被忽略"
 
 	arr["ENGLISH",725]="9.  Decloaking by deauthentication"
 	arr["SPANISH",725]="9.  Decloaking por desautenticación"
