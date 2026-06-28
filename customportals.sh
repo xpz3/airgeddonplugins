@@ -10,7 +10,7 @@ plugin_author="xpz3"
 #Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="12.0"
+plugin_minimum_ag_affected_version="12.01"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -889,6 +889,8 @@ function customportals_override_et_prerequisites() {
 
 	rm -rf "${tmpdir}${channelfile}" > /dev/null 2>&1
 	echo "${channel}" > "${tmpdir}${channelfile}"
+	rm -rf "${tmpdir}${bandfile}" > /dev/null 2>&1
+	echo "${target_band_id}" > "${tmpdir}${bandfile}"
 
 	if [ -n "${enterprise_mode}" ]; then
 		exec_enterprise_attack
