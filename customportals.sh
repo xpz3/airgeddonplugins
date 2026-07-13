@@ -10,14 +10,13 @@ plugin_author="xpz3"
 #Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="12.0"
+plugin_minimum_ag_affected_version="12.01"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
 
 customportals_enabled=0
-customportals_absolute_script_path=""
-customportals_relative_path=""
+customportals_portal_directory=""
 customportals_selected_portal=""
 customportals_checkphpfile="check.php" #Do not change
 customportals_updatephpfile="update.php" #Do not change
@@ -28,6 +27,14 @@ customportals_jsonresponseenable=true #Should be false for Technicolor_en.portal
 #User defined variables
 customportals_possible_password_fields="password|password1|passphrase|key|key1|wpa|wpa_psw" #The password field of the portal html template must match any of these
 #customportals_php_as_cgi=0 #Uncomment this line if your portal template is using PHP as real PHP and not CGI
+
+#Set custom portals directory path
+function customportals_set_portal_directory() {
+
+	debug_print
+
+	customportals_portal_directory="${scriptfolder}${plugins_dir}customportals/"
+}
 
 #Custom function. Create update php file
 function customportals_create_updatephpfile() {
@@ -160,7 +167,7 @@ function customportals_prepare_custom_portal() {
 
 	debug_print
 
-	customportals_portal_directory="${scriptfolder}${plugins_dir}customportals/"
+	customportals_set_portal_directory
 
 	cp -r "${customportals_portal_directory}${customportals_selected_portal}"/* "${tmpdir}${webdir}"
 
@@ -497,9 +504,7 @@ function customportals_override_set_captive_portal_language() {
 	ask_yesno "customportals_text_1" "no"
 	if [ "${yesno}" = "y" ]; then
 		customportals_enabled=1
-		if [ -z "${customportals_portal_directory}" ]; then
-			customportals_portal_directory="${customportals_absolute_script_path}"plugins/customportals/
-		fi
+		customportals_set_portal_directory
 
 		if [ ! -d "${customportals_portal_directory}" ]; then
 			mkdir -p "${customportals_portal_directory}"
@@ -889,6 +894,8 @@ function customportals_override_et_prerequisites() {
 
 	rm -rf "${tmpdir}${channelfile}" > /dev/null 2>&1
 	echo "${channel}" > "${tmpdir}${channelfile}"
+	rm -rf "${tmpdir}${bandfile}" > /dev/null 2>&1
+	echo "${target_band_id}" > "${tmpdir}${bandfile}"
 
 	if [ -n "${enterprise_mode}" ]; then
 		exec_enterprise_attack

@@ -10,7 +10,7 @@ plugin_author="xpz3"
 #Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="12.0"
+plugin_minimum_ag_affected_version="12.01"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -295,23 +295,7 @@ function mass_handshake_capture_handshake_capture_check() {
 
 	debug_print
 
-	local time_counter=0
-	while true; do
-		sleep 5
-		if mass_handshake_capture_check_bssid_in_captured_file "${tmpdir}${standardhandshake_filename}" "silent" "only_handshake"; then
-			break
-		fi
-
-		time_counter=$((time_counter + 5))
-		if [ "${time_counter}" -ge "${timeout_capture_handshake_decloak}" ]; then
-			break
-		fi
-	done
-
-	kill "${processidcapture}" &> /dev/null
-	if [ "${AIRGEDDON_WINDOWS_HANDLING}" = "tmux" ]; then
-		tmux kill-window -t "${session_name}:Capturing Handshake"
-	fi
+	interruptible_capture_poll "${timeout_capture_handshake_decloak}" 1 "${processidcapture}" "Capturing Handshake" mass_handshake_capture_check_bssid_in_captured_file "${tmpdir}${standardhandshake_filename}" "silent" "only_handshake"
 }
 
 function mass_handshake_capture_launch_handshake_capture() {
@@ -320,9 +304,9 @@ function mass_handshake_capture_launch_handshake_capture() {
 
 	if [ "${AIRGEDDON_WINDOWS_HANDLING}" = "xterm" ]; then
 		processidattack=$!
-		sleep "${sleeptimeattack}" && kill "${processidattack}" &> /dev/null
-	else
-		sleep "${sleeptimeattack}" && kill "${processidattack}" && kill_tmux_windows "Capturing Handshake" &> /dev/null
+	fi
+	if ! interruptible_capture_wait "${sleeptimeattack}" "${processidattack}" "Capturing Handshake" "${processidcapture}"; then
+		return
 	fi
 
 	mass_handshake_capture_handshake_capture_check
@@ -594,7 +578,9 @@ function mass_handshake_capture_grab_wpa_targets() {
 
 	recalculate_windows_sizes
 	manage_output "+j -bg \"#000000\" -fg \"#FFFFFF\" -geometry ${g1_topright_window} -T \"Exploring for targets\"" "airodump-ng -w ${tmpdir}nws${cypher_cmd}${interface} --band ${airodump_band_modifier}" "Exploring for targets" "active"
-	wait_for_process "airodump-ng -w ${tmpdir}nws${cypher_cmd}${interface} --band ${airodump_band_modifier}" "Exploring for targets"
+	if ! wait_for_process "airodump-ng -w ${tmpdir}nws${cypher_cmd}${interface} --band ${airodump_band_modifier}" "Exploring for targets"; then
+		return 1
+	fi
 	targetline=$(awk '/(^Station[s]?|^Client[es]?)/{print NR}' "${tmpdir}nws-01.csv" 2> /dev/null)
 	targetline=$((targetline - 1))
 	head -n "${targetline}" "${tmpdir}nws-01.csv" &> "${tmpdir}nws.csv"
