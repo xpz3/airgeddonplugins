@@ -23,7 +23,7 @@
 #
 # Author  : xpz3
 # License : GPL-3.0
-# Minimum airgeddon : 12.0
+# Minimum airgeddon : 12.02
 # ============================================================================
 
 plugin_name="airgeddon_cli_multint"
@@ -32,7 +32,7 @@ plugin_author="xpz3"
 
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="12.0"
+plugin_minimum_ag_affected_version="12.02"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -312,6 +312,8 @@ function airgeddon_cli_multint_et_prerequisites() {
 
 	rm -rf "${tmpdir}${channelfile}" > /dev/null 2>&1
 	echo "${channel}" > "${tmpdir}${channelfile}"
+	rm -rf "${tmpdir}${bandfile}" > /dev/null 2>&1
+	echo "${target_band_id}" > "${tmpdir}${bandfile}"
 }
 
 # ============================================================================

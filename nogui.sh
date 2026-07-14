@@ -15,7 +15,7 @@ plugin_enabled=1
 ###### PLUGIN REQUIREMENTS ######
 
 #Set airgeddon versions to apply this plugin (leave blank to set no limits, minimum version recommended is 10.0 on which plugins feature was added)
-plugin_minimum_ag_affected_version="12.0"
+plugin_minimum_ag_affected_version="12.02"
 plugin_maximum_ag_affected_version=""
 
 #Set only one element in the array "*" to affect all distros, otherwise add them one by one with the name which airgeddon uses for that distro (examples "BlackArch", "Parrot", "Kali")
@@ -315,6 +315,7 @@ function evil_twin_attacks_menu() {
 
 	debug_print
 
+	restore_terminal_output
 	clear
 	language_strings "${language}" 253 "title"
 	current_menu="evil_twin_attacks_menu"
