@@ -85,6 +85,13 @@ function airgeddon_cli_override_exec_et_captive_portal_attack() {
 
 	debug_print
 
+	if ! check_iptables_nftables_nat_support; then
+		echo
+		language_strings "${language}" 848 "red"
+		language_strings "${language}" 115 "read"
+		return
+	fi
+
 	rm -rf "${tmpdir}${webdir}" > /dev/null 2>&1
 	mkdir "${tmpdir}${webdir}" > /dev/null 2>&1
 
