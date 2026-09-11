@@ -490,7 +490,7 @@ function nogui_override_set_et_control_script() {
 							continue
 						fi
 					fi
-					tmux kill-window -t "${session_name}:\${current_window_name}"
+					tmux kill-window -t "${session_name}:\${current_window_name}" 2> /dev/null
 				done
 			}
 		EOF
@@ -499,17 +499,17 @@ function nogui_override_set_et_control_script() {
 	cat >&7 <<-EOF
 			function finish_evil_twin() {
 	EOF
-	
+
 	cat >&7 <<-'EOF'
 				kill "$(ps -C hostapd --no-headers -o pid | tr -d ' ')" &> /dev/null
-				kill "$(ps -C dhcpd --no-headers -o pid | tr -d ' ')" &> /dev/null
+				kill "$(ps -C kea-dhcp4 --no-headers -o pid | tr -d ' ')" &> /dev/null
 				kill "$(ps -C aireplay-ng --no-headers -o pid | tr -d ' ')" &> /dev/null
 				kill "$(ps -C dnsmasq --no-headers -o pid | tr -d ' ')" &> /dev/null
 				kill "$(ps -C lighttpd --no-headers -o pid | tr -d ' ')" &> /dev/null
 				kill_et_windows
 				rm -rf /tmp/*.log
 	EOF
-	
+
 	cat >&7 <<-EOF
 				echo "" > "${et_captive_portal_logpath}"
 	EOF
@@ -599,7 +599,7 @@ function nogui_override_set_et_control_script() {
 		date_counter=$(date +%s)
 		attempts_last_number=2
 		attempts_last_number_g=2
-		dhcp_clients_previous_count=0
+		displayed_ips=()
 		inc=0
 		while true; do
 		#echo "">"/tmp/nogui-Control.log"
@@ -672,7 +672,7 @@ function nogui_override_set_et_control_script() {
 			echo -e "\t${green_color}${et_misc_texts[${language},3]}${normal_color}">>/tmp/nogui-Control.log
 			((inc	=inc+1))
 			fi
-			readarray -t DHCPCLIENTS < <(grep DHCPACK < "${tmpdir}clts.txt")
+			readarray -t DHCPCLIENTS < <(tail -n +2 "${kea_runtime_dir}${kea_leases_file}" 2> /dev/null)
 			client_ips=()
 	EOF
 
@@ -689,26 +689,22 @@ function nogui_override_set_et_control_script() {
 
 	cat >&7 <<-'EOF'
 				for client in "${DHCPCLIENTS[@]}"; do
-					dhcp_clients_count="${#DHCPCLIENTS[@]}"
-					[[ ${client} =~ ^DHCPACK[[:space:]]on[[:space:]]([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})[[:space:]]to[[:space:]](([a-fA-F0-9]{2}:?){5,6}).* ]] && client_ip="${BASH_REMATCH[1]}" && client_mac="${BASH_REMATCH[2]}"
+					IFS=',' read -r client_ip client_mac client_id client_valid_lifetime client_expire client_subnet_id client_fqdn_fwd client_fqdn_rev client_hostname client_data <<< "${client}"
+					if [[ ! ${client_ip} =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || [[ ! ${client_mac} =~ ^([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$ ]]; then
+						continue
+					fi
 					if [[ " ${client_ips[*]} " != *" ${client_ip} "* ]]; then
-						client_hostname=""
-						[[ ${client} =~ .*(\(.+\)).* ]] && client_hostname="${BASH_REMATCH[1]}"
-						if [[ -z "${client_hostname}" ]]; then
-							if [ "${dhcp_clients_count}" != "${dhcp_clients_previous_count}" ]; then
+						if [[ " ${displayed_ips[*]} " != *" ${client_ip} "* ]]; then
+							if [[ -z "${client_hostname}" ]]; then
 								echo -e "\t${client_ip} ${client_mac}">>/tmp/nogui-Control.log
-								echo>>/tmp/nogui-Control.log
-								((dhcp_clients_previous_count=dhcp_clients_count))
+							else
+								echo -e "\t${client_ip} ${client_mac} (${client_hostname})">>/tmp/nogui-Control.log
 							fi
-						else
-							if [ "${dhcp_clients_count}" != "${dhcp_clients_previous_count}" ]; then
-								echo -e "\t${client_ip} ${client_mac} ${client_hostname}">>/tmp/nogui-Control.log
-								echo>>/tmp/nogui-Control.log
-								((dhcp_clients_previous_count=dhcp_clients_count))
-							fi
+							echo>>/tmp/nogui-Control.log
+							displayed_ips+=("${client_ip}")
 						fi
 					fi
-					client_ips+=(${client_ip})
+					client_ips+=("${client_ip}")
 				done
 			fi
 			#echo -ne "\033[K\033[u"
