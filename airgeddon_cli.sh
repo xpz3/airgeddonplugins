@@ -9,7 +9,7 @@ plugin_author="xpz3"
 
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="12.0"
+plugin_minimum_ag_affected_version="12.02"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -87,6 +87,11 @@ function airgeddon_cli_override_exec_et_captive_portal_attack() {
 
 	rm -rf "${tmpdir}${webdir}" > /dev/null 2>&1
 	mkdir "${tmpdir}${webdir}" > /dev/null 2>&1
+
+	rm -rf "${tmpdir}${channelfile}" > /dev/null 2>&1
+	echo "${channel}" > "${tmpdir}${channelfile}"
+	rm -rf "${tmpdir}${bandfile}" > /dev/null 2>&1
+	echo "${target_band_id}" > "${tmpdir}${bandfile}"
 
 	set_hostapd_config
 	launch_fake_ap
