@@ -23,7 +23,7 @@
 #
 # Author  : xpz3
 # License : GPL-3.0
-# Minimum airgeddon : 12.02
+# Minimum airgeddon : 12.10
 # ============================================================================
 
 plugin_name="airgeddon_cli_multint"
@@ -32,7 +32,7 @@ plugin_author="xpz3"
 
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="12.02"
+plugin_minimum_ag_affected_version="12.10"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -60,6 +60,19 @@ airgeddon_cli_multint_secondary_wifi_interface=""
 multint_enabled=0
 multint_ap_interface=""
 multint_deauth_interface=""
+
+#Synchronize CLI multint wireless interfaces with the orchestrator file
+function airgeddon_cli_multint_sync_orchestrator_interfaces() {
+
+	debug_print
+
+	local ap_phy_interface
+	local deauth_phy_interface
+	ap_phy_interface=$(physical_interface_finder "${multint_ap_interface}")
+	deauth_phy_interface=$(physical_interface_finder "${multint_deauth_interface}")
+	register_selected_interface "main" "${multint_ap_interface}" "${ap_phy_interface}"
+	register_selected_interface "secondary" "${multint_deauth_interface}" "${deauth_phy_interface}"
+}
 
 # ============================================================================
 # USAGE / HELP
@@ -435,6 +448,8 @@ function airgeddon_cli_multint_override_select_interface() {
 							language_strings "${language}" 1 "red"
 							language_strings "${language}" 115 "read"
 							multintcounter=$((multintcounter - 1))
+						else
+							register_selected_interface "main" "${multint_ap_interface}" "$(physical_interface_finder "${multint_ap_interface}")" "check_conflicts"
 						fi
 					else
 						multint_deauth_interface="${item2}"
@@ -462,6 +477,7 @@ function airgeddon_cli_multint_override_select_interface() {
 							standard_80211be=0
 						fi
 						current_iface_on_messages="${interface}"
+						register_selected_interface "secondary" "${multint_deauth_interface}" "${phy_interface}" "check_conflicts"
 						break
 					fi
 				fi
@@ -552,6 +568,11 @@ function airgeddon_cli_multint_override_prepare_et_interface() {
 				ifacemode="Managed"
 			fi
 		fi
+	fi
+
+	if [[ "${multint_enabled}" -eq 1 ]]; then
+		multint_ap_interface="${interface}"
+		airgeddon_cli_multint_sync_orchestrator_interfaces
 	fi
 }
 
@@ -656,6 +677,9 @@ function airgeddon_cli_multint_override_restore_et_interface() {
 	fi
 
 	control_routing_status "end"
+	if [[ "${multint_enabled}" -eq 1 ]]; then
+		airgeddon_cli_multint_sync_orchestrator_interfaces
+	fi
 }
 
 # ============================================================================
@@ -917,12 +941,26 @@ function airgeddon_cli_multint_override_transfer_to_tmux() {
 
 function airgeddon_cli_multint_posthook_managed_option() {
 	multint_deauth_interface="${interface}"
+	if [[ "${multint_enabled}" -eq 1 ]]; then
+		airgeddon_cli_multint_sync_orchestrator_interfaces
+	fi
 	return 0
 }
 
 function airgeddon_cli_multint_posthook_monitor_option() {
 	multint_deauth_interface="${interface}"
+	if [[ "${multint_enabled}" -eq 1 ]]; then
+		airgeddon_cli_multint_sync_orchestrator_interfaces
+	fi
 	return 0
+}
+
+#Preserve CLI multint interface registration after initializing menu selections
+function airgeddon_cli_multint_posthook_initialize_menu_and_print_selections() {
+
+	if [[ "${multint_enabled}" -eq 1 ]]; then
+		airgeddon_cli_multint_sync_orchestrator_interfaces
+	fi
 }
 
 # ============================================================================
@@ -1336,6 +1374,7 @@ if [ "$#" -gt 0 ]; then
 				;;
 			--ap-interface)
 				multint_ap_interface="${2}"
+				register_selected_interface "main" "${multint_ap_interface}" "$(physical_interface_finder "${multint_ap_interface}")"
 				shift
 				;;
 			-b|--bssid)
@@ -1360,6 +1399,7 @@ if [ "$#" -gt 0 ]; then
 				;;
 			--deauth-interface)
 				multint_deauth_interface="${2}"
+				register_selected_interface "secondary" "${multint_deauth_interface}" "$(physical_interface_finder "${multint_deauth_interface}")"
 				shift
 				;;
 			--dos)
@@ -1434,6 +1474,7 @@ if [ "$#" -gt 0 ]; then
 			-i|--interface)
 				interface="${2}"
 				phy_interface=$(physical_interface_finder "${interface}")
+				register_selected_interface "main" "${interface}" "${phy_interface}"
 				shift
 				;;
 			-l|--cplang)

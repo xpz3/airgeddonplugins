@@ -9,7 +9,7 @@ plugin_author="xpz3"
 
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="12.02"
+plugin_minimum_ag_affected_version="12.10"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -285,6 +285,7 @@ function airgeddon_cli_override_select_interface() {
 						standard_80211ax=0
 						standard_80211be=0
 					fi
+					register_selected_interface "main" "${interface}" "${phy_interface}" "check_conflicts"
 					break
 				fi
 			done
@@ -457,6 +458,7 @@ if [ "$#" -gt 0 ];then
 			;;
 		-i|--interface) # VIF capable interface name which MUST be in MANAGED mode
 			interface="${2}"; phy_interface=$(physical_interface_finder "${interface}")
+			register_selected_interface "main" "${interface}" "${phy_interface}"
 			shift
 			;;
 		-l|--cplang) # Captive portal language --> Case sensitive. Choose from the supported languages.
@@ -473,6 +475,8 @@ if [ "$#" -gt 0 ];then
 		-p|--dp) # Enable DoS pursuit mode. Enter the name of the DoS pursuit mode interface as argument
 			dos_pursuit_mode=1
 			secondary_wifi_interface="${2}"
+			secondary_phy_interface=$(physical_interface_finder "${secondary_wifi_interface}")
+			register_selected_interface "secondary" "${secondary_wifi_interface}" "${secondary_phy_interface}"
 			if ! check_monitor_enabled "${secondary_wifi_interface}"; then
 				echo "Trying to set monitor mode on DoS Pursuit interface..."
 				if ! set_mode_without_airmon "${secondary_wifi_interface}" "monitor"; then

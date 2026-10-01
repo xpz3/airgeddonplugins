@@ -15,11 +15,24 @@ plugin_enabled=1
 ###### PLUGIN REQUIREMENTS ######
 
 #Set airgeddon versions to apply this plugin (leave blank to set no limits, minimum version recommended is 10.0 on which plugins feature was added)
-plugin_minimum_ag_affected_version="12.0"
+plugin_minimum_ag_affected_version="12.10"
 plugin_maximum_ag_affected_version=""
 
 #Set only one element in the array "*" to affect all distros, otherwise add them one by one with the name which airgeddon uses for that distro (examples "BlackArch", "Parrot", "Kali")
 plugin_distros_supported=("*")
+
+#Synchronize multint wireless interfaces with the orchestrator file
+function multint_sync_orchestrator_interfaces() {
+
+	debug_print
+
+	local ap_phy_interface
+	local deauth_phy_interface
+	ap_phy_interface=$(physical_interface_finder "${multint_ap_interface}")
+	deauth_phy_interface=$(physical_interface_finder "${multint_deauth_interface}")
+	register_selected_interface "main" "${multint_ap_interface}" "${ap_phy_interface}"
+	register_selected_interface "secondary" "${multint_deauth_interface}" "${deauth_phy_interface}"
+}
 
 function multint_override_select_interface() {
 
@@ -132,6 +145,8 @@ function multint_override_select_interface() {
 							language_strings "${language}" 1 "red"
 							language_strings "${language}" 115 "read"
 							multintcounter=$((multintcounter - 1))
+						else
+							register_selected_interface "main" "${multint_ap_interface}" "$(physical_interface_finder "${multint_ap_interface}")" "check_conflicts"
 						fi
 					else
 						multint_deauth_interface="${item2}"
@@ -160,6 +175,7 @@ function multint_override_select_interface() {
 							standard_80211ax=0
 							standard_80211be=0
 						fi
+						register_selected_interface "secondary" "${multint_deauth_interface}" "${phy_interface}" "check_conflicts"
 						break
 					fi
 				fi
@@ -233,6 +249,11 @@ function multint_override_prepare_et_interface() {
 			fi
 		fi
 	fi
+
+	if [ "${multint_enabled}" -eq 1 ]; then
+		multint_ap_interface="${interface}"
+		multint_sync_orchestrator_interfaces
+	fi
 }
 
 function multint_override_restore_et_interface() {
@@ -291,6 +312,9 @@ function multint_override_restore_et_interface() {
 	fi
 
 	control_routing_status "end"
+	if [ "${multint_enabled}" -eq 1 ]; then
+		multint_sync_orchestrator_interfaces
+	fi
 }
 
 function multint_override_select_secondary_interface() {
@@ -521,6 +545,9 @@ function multint_override_print_iface_selected() {
 function multint_posthook_managed_option() {
 
 	multint_deauth_interface="${interface}"
+	if [ "${multint_enabled}" -eq 1 ]; then
+		multint_sync_orchestrator_interfaces
+	fi
 
 	return 0
 }
@@ -528,8 +555,19 @@ function multint_posthook_managed_option() {
 function multint_posthook_monitor_option() {
 
 	multint_deauth_interface="${interface}"
+	if [ "${multint_enabled}" -eq 1 ]; then
+		multint_sync_orchestrator_interfaces
+	fi
 
 	return 0
+}
+
+#Posthook initialize_menu_and_print_selections function to preserve multint interface registration
+function multint_posthook_initialize_menu_and_print_selections() {
+
+	if [ "${multint_enabled}" -eq 1 ]; then
+		multint_sync_orchestrator_interfaces
+	fi
 }
 
 #Prehook for hookable_for_languages function to modify language strings
