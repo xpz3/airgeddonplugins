@@ -976,7 +976,10 @@ function customportals_override_et_prerequisites() {
 	echo
 	language_strings "${language}" 296 "yellow"
 	language_strings "${language}" 115 "read"
-	prepare_et_interface
+
+	if ! prepare_et_interface; then
+		return 1
+	fi
 
 	rm -rf "${tmpdir}${channelfile}" > /dev/null 2>&1
 	echo "${channel}" > "${tmpdir}${channelfile}"
