@@ -85,6 +85,8 @@ function airgeddon_cli_override_exec_et_captive_portal_attack() {
 
 	debug_print
 
+	local restore_result=0
+
 	rm -rf "${tmpdir}${webdir}" > /dev/null 2>&1
 	mkdir "${tmpdir}${webdir}" > /dev/null 2>&1
 
@@ -119,8 +121,9 @@ function airgeddon_cli_override_exec_et_captive_portal_attack() {
 		recover_current_channel
 	fi
 
-	restore_et_interface
+	restore_et_interface || restore_result=$?
 	clean_tmpfiles
+	return ${restore_result}
 }
 
 function airgeddon_cli_read_target_values() {
@@ -174,6 +177,8 @@ function airgeddon_cli_parse_parameters() {
 
 	debug_print
 
+	local attack_result=0
+
 	if [ "${AIRGEDDON_WINDOWS_HANDLING}" = "tmux" ];then
 		transfer_to_tmux "${airgeddon_cli_arguments_copy}"
 		if ! check_inside_tmux; then
@@ -197,13 +202,17 @@ function airgeddon_cli_parse_parameters() {
 
 	language_strings "${language}" 101 "title"
 	print_iface_selected
+	et_initial_state="${ifacemode}"
 	print_all_target_vars
 	echo
 	language_strings "${language}" 296 "yellow"
-	exec_et_captive_portal_attack
-	evil_twin_attacks_menu
+	exec_et_captive_portal_attack || attack_result=$?
 	airgeddon_cli_active=0
 	airgeddon_cli_skip=1
+	if [ "${attack_result}" -ne 0 ] || [ -z "${interface}" ]; then
+		select_interface
+	fi
+	evil_twin_attacks_menu
 	main_menu
 }
 
@@ -212,7 +221,10 @@ function airgeddon_cli_override_select_interface() {
 	debug_print
 
 	if [[ "${airgeddon_cli_active}" == 1 ]] && [[ "${airgeddon_cli_skip}" == 0 ]];then
-		return
+		if [ -z "${interface}" ]; then
+			return 1
+		fi
+		return 0
 	else
 		local interface_menu_band
 
