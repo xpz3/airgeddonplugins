@@ -28,10 +28,18 @@ function multint_sync_orchestrator_interfaces() {
 
 	local ap_phy_interface
 	local deauth_phy_interface
-	ap_phy_interface=$(physical_interface_finder "${multint_ap_interface}")
-	deauth_phy_interface=$(physical_interface_finder "${multint_deauth_interface}")
-	register_selected_interface "main" "${multint_ap_interface}" "${ap_phy_interface}"
-	register_selected_interface "secondary" "${multint_deauth_interface}" "${deauth_phy_interface}"
+	if check_interface_wifi "${multint_ap_interface}"; then
+		ap_phy_interface=$(physical_interface_finder "${multint_ap_interface}")
+		register_selected_interface "main" "${multint_ap_interface}" "${ap_phy_interface}"
+	else
+		register_selected_interface "main" "" ""
+	fi
+	if check_interface_wifi "${multint_deauth_interface}"; then
+		deauth_phy_interface=$(physical_interface_finder "${multint_deauth_interface}")
+		register_selected_interface "secondary" "${multint_deauth_interface}" "${deauth_phy_interface}"
+	else
+		register_selected_interface "secondary" "" ""
+	fi
 }
 
 function multint_override_select_interface() {
@@ -215,25 +223,54 @@ function multint_override_prepare_et_interface() {
 	et_initial_state=${ifacemode}
 
 	if [ "${multint_enabled}" -eq 1 ]; then
-		ifacemode="Managed"
 		multint_deauth_interface="${interface}"
 		interface="${multint_ap_interface}"
+		phy_interface=$(physical_interface_finder "${interface}")
+		check_interface_mode "${interface}"
 	fi
+
+	local original_interface="${interface}"
+	local original_phy
+	local original_mac
+	original_phy=$(physical_interface_finder "${interface}")
+	original_mac=$(cat "/sys/class/net/${interface}/address" 2> /dev/null)
 
 	if [ "${ifacemode}" != "Managed" ]; then
 		check_airmon_compatibility "interface"
 		if [ "${interface_airmon_compatible}" -eq 1 ]; then
 
 			new_interface=$(${airmon} stop "${interface}" 2> /dev/null | grep station | head -n 1)
-			ifacemode="Managed"
 			[[ ${new_interface} =~ \]?([A-Za-z0-9]+)\)?$ ]] && new_interface="${BASH_REMATCH[1]}"
 
-			if [ "${interface}" != "${new_interface}" ]; then
-				if check_interface_coherence; then
-					interface=${new_interface}
-					phy_interface=$(physical_interface_finder "${interface}")
-					check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
-					current_iface_on_messages="${interface}"
+			if ! new_interface=$(resolve_interface_name "${original_interface}" "${new_interface}" "managed" "${original_phy}" "${original_mac}"); then
+				if ! ip link show dev "${original_interface}" > /dev/null 2>&1; then
+					interface=""
+					phy_interface=""
+					interface_mac=""
+					ifacemode=""
+					if [ "${multint_enabled}" -eq 1 ]; then
+						multint_ap_interface=""
+					fi
+					register_selected_interface "main" "" ""
+				fi
+				echo
+				language_strings "${language}" 855 "red"
+				language_strings "${language}" 115 "read"
+				if [ -z "${interface}" ] || [ "${multint_enabled}" -eq 1 ]; then
+					select_interface
+				fi
+				return 1
+			fi
+			ifacemode="Managed"
+
+			if [ "${original_interface}" != "${new_interface}" ]; then
+				interface="${new_interface}"
+				phy_interface=$(physical_interface_finder "${interface}")
+				check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
+				interface_mac=$(cat "/sys/class/net/${interface}/address" 2> /dev/null)
+				current_iface_on_messages="${interface}"
+				if [ "${multint_enabled}" -eq 0 ]; then
+					register_selected_interface "main" "${interface}" "${phy_interface}"
 				fi
 				echo
 				language_strings "${language}" 15 "yellow"
@@ -243,6 +280,9 @@ function multint_override_prepare_et_interface() {
 				echo
 				language_strings "${language}" 1 "red"
 				language_strings "${language}" 115 "read"
+				if [ "${multint_enabled}" -eq 1 ]; then
+					select_interface
+				fi
 				return 1
 			else
 				ifacemode="Managed"
@@ -254,18 +294,21 @@ function multint_override_prepare_et_interface() {
 		multint_ap_interface="${interface}"
 		multint_sync_orchestrator_interfaces
 	fi
+
+	return 0
 }
 
 function multint_override_restore_et_interface() {
 
 	debug_print
 
-	if [ "${multint_enabled}" -eq 1 ]; then
+	local original_interface="${interface}"
+	local original_phy
+	local original_mac
+	local restore_failed=0
+	original_phy=$(physical_interface_finder "${interface}")
+	original_mac=$(cat "/sys/class/net/${interface}/address" 2> /dev/null)
 
-		interface="${multint_deauth_interface}"
-		set_mode_without_airmon "${multint_ap_interface}" "managed"
-		ifacemode="Monitor"
-	fi
 	echo
 	language_strings "${language}" 299 "blue"
 
@@ -273,15 +316,53 @@ function multint_override_restore_et_interface() {
 
 	mac_spoofing_desired=0
 
-	iw dev "${iface_monitor_et_deauth}" del > /dev/null 2>&1
+	if [ "${multint_enabled}" -eq 0 ]; then
+		iw dev "${iface_monitor_et_deauth}" del > /dev/null 2>&1
+	fi
 
 	ip addr del "${et_ip_router}/${std_c_mask}" dev "${interface}" > /dev/null 2>&1
 	ip route del "${et_ip_range}/${std_c_mask_cidr}" dev "${interface}" table local proto static scope link > /dev/null 2>&1
 
-	if [ "${multint_enabled}" -eq 0 ]; then
+	if [ "${multint_enabled}" -eq 1 ]; then
+		if ! set_mode_without_airmon "${multint_ap_interface}" "managed"; then
+			restore_failed=1
+			current_iface_on_messages="${multint_ap_interface}"
+			echo
+			language_strings "${language}" 1 "red"
+			language_strings "${language}" 115 "read"
+		fi
+		interface="${multint_deauth_interface}"
+		phy_interface=$(physical_interface_finder "${interface}")
+		original_mac=$(cat "/sys/class/net/${interface}/address" 2> /dev/null)
+		if new_interface=$(resolve_interface_name "${interface}" "${interface}" "monitor" "${phy_interface}" "${original_mac}"); then
+			interface="${new_interface}"
+			multint_deauth_interface="${interface}"
+			phy_interface=$(physical_interface_finder "${interface}")
+			interface_mac=$(cat "/sys/class/net/${interface}/address" 2> /dev/null)
+			ifacemode="Monitor"
+			current_iface_on_messages="${interface}"
+		else
+			restore_failed=1
+			if ! ip link show dev "${interface}" > /dev/null 2>&1; then
+				interface=""
+				phy_interface=""
+				interface_mac=""
+				ifacemode=""
+				multint_deauth_interface=""
+			else
+				check_interface_mode "${interface}"
+			fi
+			echo
+			language_strings "${language}" 855 "red"
+			language_strings "${language}" 115 "read"
+		fi
+	else
 		if [ "${et_initial_state}" = "Managed" ]; then
-			set_mode_without_airmon "${interface}" "managed"
-			ifacemode="Managed"
+			if set_mode_without_airmon "${interface}" "managed"; then
+				ifacemode="Managed"
+			else
+				restore_failed=1
+			fi
 		else
 			if [ "${interface_airmon_compatible}" -eq 1 ]; then
 				new_interface=$(${airmon} start "${interface}" 2> /dev/null | grep monitor)
@@ -291,30 +372,53 @@ function multint_override_restore_et_interface() {
 					echo
 					language_strings "${language}" 435 "red"
 					language_strings "${language}" 115 "read"
-					return
+					control_routing_status "end"
+					return 1
 				fi
 
-				ifacemode="Monitor"
-
 				[[ ${new_interface} =~ \]?([A-Za-z0-9]+)\)?$ ]] && new_interface="${BASH_REMATCH[1]}"
-				if [ "${interface}" != "${new_interface}" ]; then
-					interface=${new_interface}
+				if new_interface=$(resolve_interface_name "${original_interface}" "${new_interface}" "monitor" "${original_phy}" "${original_mac}"); then
+					interface="${new_interface}"
 					phy_interface=$(physical_interface_finder "${interface}")
 					check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
+					interface_mac=$(cat "/sys/class/net/${interface}/address" 2> /dev/null)
+					ifacemode="Monitor"
 					current_iface_on_messages="${interface}"
+					register_selected_interface "main" "${interface}" "${phy_interface}"
+				else
+					restore_failed=1
+					if ! ip link show dev "${original_interface}" > /dev/null 2>&1; then
+						interface=""
+						phy_interface=""
+						interface_mac=""
+						ifacemode=""
+						register_selected_interface "main" "" ""
+					fi
+					echo
+					language_strings "${language}" 854 "red"
+					language_strings "${language}" 115 "read"
 				fi
 			else
 				if set_mode_without_airmon "${interface}" "monitor"; then
 					ifacemode="Monitor"
+				else
+					restore_failed=1
 				fi
 			fi
 		fi
 	fi
 
 	control_routing_status "end"
+
 	if [ "${multint_enabled}" -eq 1 ]; then
 		multint_sync_orchestrator_interfaces
 	fi
+
+	if [ -z "${interface}" ] || { [ "${multint_enabled}" -eq 1 ] && ! check_interface_wifi "${multint_ap_interface}"; }; then
+		select_interface
+	fi
+
+	return ${restore_failed}
 }
 
 function multint_override_select_secondary_interface() {
@@ -544,22 +648,32 @@ function multint_override_print_iface_selected() {
 
 function multint_posthook_managed_option() {
 
-	multint_deauth_interface="${interface}"
+	local result="${1}"
+
+	if [ "${result}" -eq 0 ]; then
+		multint_deauth_interface="${interface}"
+	fi
+
 	if [ "${multint_enabled}" -eq 1 ]; then
 		multint_sync_orchestrator_interfaces
 	fi
 
-	return 0
+	return ${result}
 }
 
 function multint_posthook_monitor_option() {
 
-	multint_deauth_interface="${interface}"
+	local result="${1}"
+
+	if [ "${result}" -eq 0 ]; then
+		multint_deauth_interface="${interface}"
+	fi
+
 	if [ "${multint_enabled}" -eq 1 ]; then
 		multint_sync_orchestrator_interfaces
 	fi
 
-	return 0
+	return ${result}
 }
 
 #Posthook initialize_menu_and_print_selections function to preserve multint interface registration
