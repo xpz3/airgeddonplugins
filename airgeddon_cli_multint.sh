@@ -23,7 +23,7 @@
 #
 # Author  : xpz3
 # License : GPL-3.0
-# Minimum airgeddon : 12.02
+# Minimum airgeddon : 12.10
 # ============================================================================
 
 plugin_name="airgeddon_cli_multint"
@@ -32,7 +32,7 @@ plugin_author="xpz3"
 
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="12.02"
+plugin_minimum_ag_affected_version="12.10"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -60,6 +60,29 @@ airgeddon_cli_multint_secondary_wifi_interface=""
 multint_enabled=0
 multint_ap_interface=""
 multint_deauth_interface=""
+airgeddon_cli_multint_managed_role=""
+airgeddon_cli_multint_monitor_role=""
+
+#Synchronize CLI multint wireless interfaces with the orchestrator file
+function airgeddon_cli_multint_sync_orchestrator_interfaces() {
+
+	debug_print
+
+	local ap_phy_interface
+	local deauth_phy_interface
+	if check_interface_wifi "${multint_ap_interface}"; then
+		ap_phy_interface=$(physical_interface_finder "${multint_ap_interface}")
+		register_selected_interface "main" "${multint_ap_interface}" "${ap_phy_interface}"
+	else
+		register_selected_interface "main" "" ""
+	fi
+	if check_interface_wifi "${multint_deauth_interface}"; then
+		deauth_phy_interface=$(physical_interface_finder "${multint_deauth_interface}")
+		register_selected_interface "secondary" "${multint_deauth_interface}" "${deauth_phy_interface}"
+	else
+		register_selected_interface "secondary" "" ""
+	fi
+}
 
 # ============================================================================
 # USAGE / HELP
@@ -241,6 +264,8 @@ function airgeddon_cli_multint_parse_parameters() {
 
 	debug_print
 
+	local attack_result=0
+
 	if [ "${AIRGEDDON_WINDOWS_HANDLING}" = "tmux" ]; then
 		transfer_to_tmux "${airgeddon_cli_arguments_copy}"
 		if ! check_inside_tmux; then
@@ -269,10 +294,17 @@ function airgeddon_cli_multint_parse_parameters() {
 	echo
 	language_strings "${language}" 296 "yellow"
 
-	exec_et_captive_portal_attack
-	evil_twin_attacks_menu
+	exec_et_captive_portal_attack || attack_result=$?
 	airgeddon_cli_active=0
 	airgeddon_cli_skip=1
+	if [[ "${attack_result}" -ne 0 ]] || [[ -z "${interface}" ]]; then
+		select_interface
+	elif [[ "${multint_enabled}" -eq 1 ]]; then
+		if ! check_interface_wifi "${multint_ap_interface}" || ! check_interface_wifi "${multint_deauth_interface}"; then
+			select_interface
+		fi
+	fi
+	evil_twin_attacks_menu
 	main_menu
 }
 
@@ -323,11 +355,18 @@ function airgeddon_cli_multint_override_exec_et_captive_portal_attack() {
 
 	debug_print
 
+	local restore_result=0
+
 	rm -rf "${tmpdir}${webdir}" > /dev/null 2>&1
 	mkdir "${tmpdir}${webdir}" > /dev/null 2>&1
 
 	airgeddon_cli_multint_et_prerequisites
-	prepare_et_interface
+	if [[ "${airgeddon_cli_active}" -eq 1 ]] && [[ "${airgeddon_cli_skip}" -eq 0 ]]; then
+		if ! prepare_et_interface; then
+			clean_tmpfiles
+			return 1
+		fi
+	fi
 	set_hostapd_config
 	launch_fake_ap
 	set_network_interface_data
@@ -354,8 +393,9 @@ function airgeddon_cli_multint_override_exec_et_captive_portal_attack() {
 		recover_current_channel
 	fi
 
-	restore_et_interface
+	restore_et_interface || restore_result=$?
 	clean_tmpfiles
+	return ${restore_result}
 }
 
 # ============================================================================
@@ -370,7 +410,10 @@ function airgeddon_cli_multint_override_select_interface() {
 
 	# CLI MODE: interfaces already set during arg parsing
 	if [[ "${airgeddon_cli_active}" == 1 ]] && [[ "${airgeddon_cli_skip}" == 0 ]]; then
-		return
+		if [[ -z "${interface}" ]]; then
+			return 1
+		fi
+		return 0
 	fi
 
 	# INTERACTIVE DUAL-ADAPTER MODE (no CLI args, from multint)
@@ -435,6 +478,8 @@ function airgeddon_cli_multint_override_select_interface() {
 							language_strings "${language}" 1 "red"
 							language_strings "${language}" 115 "read"
 							multintcounter=$((multintcounter - 1))
+						else
+							register_selected_interface "main" "${multint_ap_interface}" "$(physical_interface_finder "${multint_ap_interface}")" "check_conflicts"
 						fi
 					else
 						multint_deauth_interface="${item2}"
@@ -462,6 +507,7 @@ function airgeddon_cli_multint_override_select_interface() {
 							standard_80211be=0
 						fi
 						current_iface_on_messages="${interface}"
+						register_selected_interface "secondary" "${multint_deauth_interface}" "${phy_interface}" "check_conflicts"
 						break
 					fi
 				fi
@@ -513,46 +559,82 @@ function airgeddon_cli_multint_override_prepare_et_monitor() {
 function airgeddon_cli_multint_override_prepare_et_interface() {
 
 	debug_print
+
+	local original_interface
+	local original_phy
+	local original_mac
+	local prepare_failed=0
+
 	et_initial_state=${ifacemode}
 
-	if [[ "${airgeddon_cli_active}" == 0 ]] && [[ "${airgeddon_cli_skip}" == 1 ]]; then
+	if [[ "${multint_enabled}" -eq 1 ]] && [[ "${airgeddon_cli_active}" == 0 ]] && [[ "${airgeddon_cli_skip}" == 1 ]]; then
 		interface="${multint_ap_interface}"
 	fi
 
-	if [[ "${multint_enabled}" -eq 1 ]]; then
-		ifacemode="Managed"
-		current_iface_on_messages="${interface}"
-	fi
+	phy_interface=$(physical_interface_finder "${interface}")
+	check_interface_mode "${interface}"
+	original_interface="${interface}"
+	original_phy="${phy_interface}"
+	original_mac=$(cat "/sys/class/net/${interface}/address" 2> /dev/null)
+	new_interface="${interface}"
 
 	if [[ "${ifacemode}" != "Managed" ]]; then
 		check_airmon_compatibility "interface"
 		if [[ "${interface_airmon_compatible}" -eq 1 ]]; then
 			new_interface=$(${airmon} stop "${interface}" 2>/dev/null | \
 			                grep station | head -n 1)
-			ifacemode="Managed"
 			[[ ${new_interface} =~ \]?([A-Za-z0-9]+)\)?$ ]] && \
 				new_interface="${BASH_REMATCH[1]}"
-			if [[ "${interface}" != "${new_interface}" ]]; then
-				if check_interface_coherence; then
-					interface=${new_interface}
-					phy_interface=$(physical_interface_finder "${interface}")
-					check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
-					current_iface_on_messages="${interface}"
-				fi
-				echo
-				language_strings "${language}" 15 "yellow"
-			fi
 		else
 			if ! set_mode_without_airmon "${interface}" "managed"; then
-				echo
-				language_strings "${language}" 1 "red"
-				language_strings "${language}" 115 "read"
-				return 1
-			else
-				ifacemode="Managed"
+				prepare_failed=1
 			fi
 		fi
 	fi
+
+	if [[ "${prepare_failed}" -eq 1 ]] || ! new_interface=$(resolve_interface_name "${original_interface}" "${new_interface}" "managed" "${original_phy}" "${original_mac}"); then
+		if ! ip link show dev "${original_interface}" > /dev/null 2>&1; then
+			interface=""
+			phy_interface=""
+			interface_mac=""
+			ifacemode=""
+			if [[ "${multint_enabled}" -eq 1 ]]; then
+				multint_ap_interface=""
+			fi
+			register_selected_interface "main" "" ""
+		fi
+		if [[ "${multint_enabled}" -eq 1 ]]; then
+			airgeddon_cli_multint_sync_orchestrator_interfaces
+		fi
+		echo
+		language_strings "${language}" 855 "red"
+		language_strings "${language}" 115 "read"
+		if [[ "${airgeddon_cli_active}" -ne 1 ]] || [[ "${airgeddon_cli_skip}" -ne 0 ]]; then
+			if [[ -z "${interface}" ]] || [[ "${multint_enabled}" -eq 1 ]]; then
+				select_interface
+			fi
+		fi
+		return 1
+	fi
+
+	interface="${new_interface}"
+	phy_interface=$(physical_interface_finder "${interface}")
+	check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
+	interface_mac=$(cat "/sys/class/net/${interface}/address" 2> /dev/null)
+	ifacemode="Managed"
+	current_iface_on_messages="${interface}"
+	if [[ "${original_interface}" != "${interface}" ]]; then
+		echo
+		language_strings "${language}" 15 "yellow"
+	fi
+
+	if [[ "${multint_enabled}" -eq 1 ]]; then
+		multint_ap_interface="${interface}"
+		airgeddon_cli_multint_sync_orchestrator_interfaces
+	else
+		register_selected_interface "main" "${interface}" "${phy_interface}"
+	fi
+	return 0
 }
 
 # ============================================================================
@@ -592,18 +674,15 @@ function airgeddon_cli_multint_override_restore_et_interface() {
 
 	debug_print
 
-	if [[ "${multint_enabled}" -eq 1 ]]; then
-		# Restore cards back to managed mode
-		set_mode_without_airmon "${multint_ap_interface}" "managed"
-		set_mode_without_airmon "${multint_deauth_interface}" "managed"
-		if [ "${dos_pursuit_mode}" -eq 1 ]; then
-			while pgrep -f "airodump-ng.*${airgeddon_cli_multint_secondary_wifi_interface}" >/dev/null; do
-				sleep 0.1
-			done
-			set_mode_without_airmon "${airgeddon_cli_multint_secondary_wifi_interface}" "managed"
-		fi
-		ifacemode="Managed"
-	fi
+	local original_interface="${interface}"
+	local original_phy
+	local original_mac
+	local restore_role
+	local restored_mode
+	local restore_failed=0
+	original_phy=$(physical_interface_finder "${interface}")
+	original_mac=$(cat "/sys/class/net/${interface}/address" 2> /dev/null)
+	new_interface="${interface}"
 
 	echo
 	language_strings "${language}" 299 "blue"
@@ -621,10 +700,78 @@ function airgeddon_cli_multint_override_restore_et_interface() {
 	ip route del "${et_ip_range}/${std_c_mask_cidr}" dev "${interface}" \
 	   table local proto static scope link > /dev/null 2>&1
 
-	if [[ "${multint_enabled}" -eq 0 ]]; then
+	if [[ "${multint_enabled}" -eq 1 ]]; then
+		# Restore cards back to managed mode
+		for restore_role in "ap" "deauth" "pursuit"; do
+			case "${restore_role}" in
+				"ap")
+					original_interface="${multint_ap_interface}"
+				;;
+				"deauth")
+					original_interface="${multint_deauth_interface}"
+				;;
+				"pursuit")
+					if [[ "${dos_pursuit_mode}" -ne 1 ]]; then
+						continue
+					fi
+					while pgrep -f "airodump-ng.*${airgeddon_cli_multint_secondary_wifi_interface}" >/dev/null; do
+						sleep 0.1
+					done
+					original_interface="${airgeddon_cli_multint_secondary_wifi_interface}"
+				;;
+			esac
+			original_phy=$(physical_interface_finder "${original_interface}")
+			original_mac=$(cat "/sys/class/net/${original_interface}/address" 2> /dev/null)
+			new_interface="${original_interface}"
+			if ! set_mode_without_airmon "${original_interface}" "managed" || ! new_interface=$(resolve_interface_name "${original_interface}" "${original_interface}" "managed" "${original_phy}" "${original_mac}"); then
+				restore_failed=1
+				if check_interface_wifi "${original_interface}"; then
+					new_interface="${original_interface}"
+				else
+					new_interface=""
+				fi
+				echo
+				language_strings "${language}" 855 "red"
+				language_strings "${language}" 115 "read"
+			fi
+			case "${restore_role}" in
+				"ap")
+					multint_ap_interface="${new_interface}"
+				;;
+				"deauth")
+					multint_deauth_interface="${new_interface}"
+					restored_mode=$(iw "${new_interface}" info 2> /dev/null | awk '$1 == "type" {print $2; exit}')
+					ifacemode_deauth="${restored_mode^}"
+				;;
+				"pursuit")
+					airgeddon_cli_multint_secondary_wifi_interface="${new_interface}"
+					secondary_wifi_interface="${new_interface}"
+					if [[ -n "${secondary_wifi_interface}" ]]; then
+						secondary_phy_interface=$(physical_interface_finder "${secondary_wifi_interface}")
+					else
+						secondary_phy_interface=""
+					fi
+				;;
+			esac
+		done
+		interface="${multint_ap_interface}"
+		if check_interface_wifi "${interface}"; then
+			phy_interface=$(physical_interface_finder "${interface}")
+			interface_mac=$(cat "/sys/class/net/${interface}/address" 2> /dev/null)
+			restored_mode=$(iw "${interface}" info 2> /dev/null | awk '$1 == "type" {print $2; exit}')
+			ifacemode="${restored_mode^}"
+			current_iface_on_messages="${interface}"
+		else
+			interface=""
+			phy_interface=""
+			interface_mac=""
+			ifacemode=""
+		fi
+	else
 		if [[ "${et_initial_state}" = "Managed" ]]; then
-			set_mode_without_airmon "${interface}" "managed"
-			ifacemode="Managed"
+			if ! set_mode_without_airmon "${interface}" "managed"; then
+				restore_failed=1
+			fi
 		else
 			if [[ "${interface_airmon_compatible}" -eq 1 ]]; then
 				new_interface=$(${airmon} start "${interface}" 2>/dev/null | \
@@ -636,26 +783,56 @@ function airgeddon_cli_multint_override_restore_et_interface() {
 					echo
 					language_strings "${language}" 435 "red"
 					language_strings "${language}" 115 "read"
-					return
+					control_routing_status "end"
+					return 1
 				fi
-				ifacemode="Monitor"
 				[[ ${new_interface} =~ \]?([A-Za-z0-9]+)\)?$ ]] && \
 					new_interface="${BASH_REMATCH[1]}"
-				if [[ "${interface}" != "${new_interface}" ]]; then
-					interface=${new_interface}
-					phy_interface=$(physical_interface_finder "${interface}")
-					check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
-					current_iface_on_messages="${interface}"
-				fi
 			else
-				if set_mode_without_airmon "${interface}" "monitor"; then
-					ifacemode="Monitor"
+				if ! set_mode_without_airmon "${interface}" "monitor"; then
+					restore_failed=1
 				fi
 			fi
+		fi
+		if [[ "${restore_failed}" -eq 0 ]] && new_interface=$(resolve_interface_name "${original_interface}" "${new_interface}" "${et_initial_state}" "${original_phy}" "${original_mac}"); then
+			interface="${new_interface}"
+			phy_interface=$(physical_interface_finder "${interface}")
+			check_interface_supported_bands "${phy_interface}" "main_wifi_interface"
+			interface_mac=$(cat "/sys/class/net/${interface}/address" 2> /dev/null)
+			ifacemode="${et_initial_state}"
+			current_iface_on_messages="${interface}"
+			register_selected_interface "main" "${interface}" "${phy_interface}"
+		else
+			restore_failed=1
+			if ! ip link show dev "${original_interface}" > /dev/null 2>&1; then
+				interface=""
+				phy_interface=""
+				interface_mac=""
+				ifacemode=""
+				register_selected_interface "main" "" ""
+			else
+				check_interface_mode "${interface}"
+			fi
+			echo
+			language_strings "${language}" 855 "red"
+			language_strings "${language}" 115 "read"
 		fi
 	fi
 
 	control_routing_status "end"
+	if [[ "${multint_enabled}" -eq 1 ]]; then
+		airgeddon_cli_multint_sync_orchestrator_interfaces
+	fi
+	if [[ "${airgeddon_cli_active}" -ne 1 ]] || [[ "${airgeddon_cli_skip}" -ne 0 ]]; then
+		if [[ "${restore_failed}" -ne 0 ]] || [[ -z "${interface}" ]]; then
+			select_interface
+		elif [[ "${multint_enabled}" -eq 1 ]]; then
+			if ! check_interface_wifi "${multint_ap_interface}" || ! check_interface_wifi "${multint_deauth_interface}"; then
+				select_interface
+			fi
+		fi
+	fi
+	return ${restore_failed}
 }
 
 # ============================================================================
@@ -867,6 +1044,7 @@ function airgeddon_cli_multint_override_print_iface_selected() {
 function airgeddon_cli_multint_override_start_airgeddon_from_tmux() {
 
 	debug_print
+	local tmux_handoff_rc
 
 	tmux rename-window -t "${session_name}" "${tmux_main_window}"
 	tmux send-keys -t "${session_name}:${tmux_main_window}" "clear;cd ${scriptfolder};bash ${scriptname} true ${airgeddon_uid}" ENTER
@@ -875,6 +1053,11 @@ function airgeddon_cli_multint_override_start_airgeddon_from_tmux() {
 		tmux attach -t "${session_name}"
 	else
 		tmux switch-client -t "${session_name}"
+	fi
+	tmux_handoff_rc=$?
+	if [ "${tmux_handoff_rc}" -ne 0 ]; then
+		tmux kill-session -t "${session_name}" > /dev/null 2>&1
+		return "${tmux_handoff_rc}"
 	fi
 }
 
@@ -915,14 +1098,78 @@ function airgeddon_cli_multint_override_transfer_to_tmux() {
 }
 
 
+#Remember the selected interface role before changing to managed mode
+function airgeddon_cli_multint_prehook_managed_option() {
+
+	debug_print
+
+	airgeddon_cli_multint_managed_role=""
+	if [[ "${1}" = "${interface}" ]]; then
+		if [[ "${1}" = "${multint_ap_interface}" ]]; then
+			airgeddon_cli_multint_managed_role="ap"
+		elif [[ "${1}" = "${multint_deauth_interface}" ]]; then
+			airgeddon_cli_multint_managed_role="deauth"
+		fi
+	fi
+}
+
 function airgeddon_cli_multint_posthook_managed_option() {
-	multint_deauth_interface="${interface}"
-	return 0
+	local result="${1}"
+	if [[ "${result}" -eq 0 ]]; then
+		case "${airgeddon_cli_multint_managed_role}" in
+			"ap")
+				multint_ap_interface="${interface}"
+			;;
+			"deauth")
+				multint_deauth_interface="${interface}"
+			;;
+		esac
+	fi
+	if [[ "${multint_enabled}" -eq 1 ]]; then
+		airgeddon_cli_multint_sync_orchestrator_interfaces
+	fi
+	return ${result}
+}
+
+#Remember the selected interface role before changing to monitor mode
+function airgeddon_cli_multint_prehook_monitor_option() {
+
+	debug_print
+
+	airgeddon_cli_multint_monitor_role=""
+	if [[ "${1}" = "${interface}" ]]; then
+		if [[ "${1}" = "${multint_ap_interface}" ]]; then
+			airgeddon_cli_multint_monitor_role="ap"
+		elif [[ "${1}" = "${multint_deauth_interface}" ]]; then
+			airgeddon_cli_multint_monitor_role="deauth"
+		fi
+	fi
 }
 
 function airgeddon_cli_multint_posthook_monitor_option() {
-	multint_deauth_interface="${interface}"
-	return 0
+	local result="${1}"
+	if [[ "${result}" -eq 0 ]]; then
+		case "${airgeddon_cli_multint_monitor_role}" in
+			"ap")
+				multint_ap_interface="${interface}"
+			;;
+			"deauth")
+				multint_deauth_interface="${interface}"
+			;;
+		esac
+	fi
+	if [[ "${multint_enabled}" -eq 1 ]]; then
+		airgeddon_cli_multint_sync_orchestrator_interfaces
+	fi
+	return ${result}
+}
+
+#Preserve CLI multint interface registration after initializing menu selections
+function airgeddon_cli_multint_posthook_initialize_menu_and_print_selections() {
+
+	if [[ "${multint_enabled}" -eq 1 ]]; then
+		airgeddon_cli_multint_sync_orchestrator_interfaces
+	fi
 }
 
 # ============================================================================
@@ -1336,6 +1583,7 @@ if [ "$#" -gt 0 ]; then
 				;;
 			--ap-interface)
 				multint_ap_interface="${2}"
+				register_selected_interface "main" "${multint_ap_interface}" "$(physical_interface_finder "${multint_ap_interface}")"
 				shift
 				;;
 			-b|--bssid)
@@ -1360,6 +1608,7 @@ if [ "$#" -gt 0 ]; then
 				;;
 			--deauth-interface)
 				multint_deauth_interface="${2}"
+				register_selected_interface "secondary" "${multint_deauth_interface}" "$(physical_interface_finder "${multint_deauth_interface}")"
 				shift
 				;;
 			--dos)
@@ -1434,6 +1683,7 @@ if [ "$#" -gt 0 ]; then
 			-i|--interface)
 				interface="${2}"
 				phy_interface=$(physical_interface_finder "${interface}")
+				register_selected_interface "main" "${interface}" "${phy_interface}"
 				shift
 				;;
 			-l|--cplang)

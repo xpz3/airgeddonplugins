@@ -9,7 +9,7 @@ plugin_author="xpz3"
 
 plugin_enabled=1
 
-plugin_minimum_ag_affected_version="12.02"
+plugin_minimum_ag_affected_version="12.10"
 plugin_maximum_ag_affected_version=""
 
 plugin_distros_supported=("*")
@@ -85,6 +85,8 @@ function airgeddon_cli_override_exec_et_captive_portal_attack() {
 
 	debug_print
 
+	local restore_result=0
+
 	rm -rf "${tmpdir}${webdir}" > /dev/null 2>&1
 	mkdir "${tmpdir}${webdir}" > /dev/null 2>&1
 
@@ -119,8 +121,9 @@ function airgeddon_cli_override_exec_et_captive_portal_attack() {
 		recover_current_channel
 	fi
 
-	restore_et_interface
+	restore_et_interface || restore_result=$?
 	clean_tmpfiles
+	return ${restore_result}
 }
 
 function airgeddon_cli_read_target_values() {
@@ -174,6 +177,8 @@ function airgeddon_cli_parse_parameters() {
 
 	debug_print
 
+	local attack_result=0
+
 	if [ "${AIRGEDDON_WINDOWS_HANDLING}" = "tmux" ];then
 		transfer_to_tmux "${airgeddon_cli_arguments_copy}"
 		if ! check_inside_tmux; then
@@ -197,13 +202,17 @@ function airgeddon_cli_parse_parameters() {
 
 	language_strings "${language}" 101 "title"
 	print_iface_selected
+	et_initial_state="${ifacemode}"
 	print_all_target_vars
 	echo
 	language_strings "${language}" 296 "yellow"
-	exec_et_captive_portal_attack
-	evil_twin_attacks_menu
+	exec_et_captive_portal_attack || attack_result=$?
 	airgeddon_cli_active=0
 	airgeddon_cli_skip=1
+	if [ "${attack_result}" -ne 0 ] || [ -z "${interface}" ]; then
+		select_interface
+	fi
+	evil_twin_attacks_menu
 	main_menu
 }
 
@@ -212,7 +221,10 @@ function airgeddon_cli_override_select_interface() {
 	debug_print
 
 	if [[ "${airgeddon_cli_active}" == 1 ]] && [[ "${airgeddon_cli_skip}" == 0 ]];then
-		return
+		if [ -z "${interface}" ]; then
+			return 1
+		fi
+		return 0
 	else
 		local interface_menu_band
 
@@ -285,6 +297,7 @@ function airgeddon_cli_override_select_interface() {
 						standard_80211ax=0
 						standard_80211be=0
 					fi
+					register_selected_interface "main" "${interface}" "${phy_interface}" "check_conflicts"
 					break
 				fi
 			done
@@ -305,6 +318,7 @@ function airgeddon_cli_prehook_main_menu() {
 function airgeddon_cli_override_start_airgeddon_from_tmux() {
 
 	debug_print
+	local tmux_handoff_rc
 
 	tmux rename-window -t "${session_name}" "${tmux_main_window}"
 	tmux send-keys -t "${session_name}:${tmux_main_window}" "clear;cd ${scriptfolder};bash ${scriptname} true ${airgeddon_uid}" ENTER
@@ -313,6 +327,11 @@ function airgeddon_cli_override_start_airgeddon_from_tmux() {
 		tmux attach -t "${session_name}"
 	else
 		tmux switch-client -t "${session_name}"
+	fi
+	tmux_handoff_rc=$?
+	if [ "${tmux_handoff_rc}" -ne 0 ]; then
+		tmux kill-session -t "${session_name}" > /dev/null 2>&1
+		return "${tmux_handoff_rc}"
 	fi
 }
 
@@ -457,6 +476,7 @@ if [ "$#" -gt 0 ];then
 			;;
 		-i|--interface) # VIF capable interface name which MUST be in MANAGED mode
 			interface="${2}"; phy_interface=$(physical_interface_finder "${interface}")
+			register_selected_interface "main" "${interface}" "${phy_interface}"
 			shift
 			;;
 		-l|--cplang) # Captive portal language --> Case sensitive. Choose from the supported languages.
@@ -473,6 +493,8 @@ if [ "$#" -gt 0 ];then
 		-p|--dp) # Enable DoS pursuit mode. Enter the name of the DoS pursuit mode interface as argument
 			dos_pursuit_mode=1
 			secondary_wifi_interface="${2}"
+			secondary_phy_interface=$(physical_interface_finder "${secondary_wifi_interface}")
+			register_selected_interface "secondary" "${secondary_wifi_interface}" "${secondary_phy_interface}"
 			if ! check_monitor_enabled "${secondary_wifi_interface}"; then
 				echo "Trying to set monitor mode on DoS Pursuit interface..."
 				if ! set_mode_without_airmon "${secondary_wifi_interface}" "monitor"; then
